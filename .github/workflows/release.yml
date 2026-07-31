@@ -1,0 +1,101 @@
+name: Windows release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify release version
+        shell: pwsh
+        run: |
+          $packageVersion = (Get-Content package.json | ConvertFrom-Json).version
+          $tauriVersion = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          $expectedTag = "v$packageVersion"
+
+          if ($env:GITHUB_REF_NAME -ne $expectedTag) {
+            throw "Tag $env:GITHUB_REF_NAME does not match package version $expectedTag."
+          }
+
+          if ($tauriVersion -ne $packageVersion) {
+            throw "Tauri version $tauriVersion does not match package version $packageVersion."
+          }
+
+      - name: Build Windows application
+        run: npm run tauri build
+
+      - name: Prepare release files
+        id: files
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $releaseDirectory = Join-Path $env:RUNNER_TEMP "gdd-tool-release"
+          New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
+
+          $portableSource = "src-tauri/target/release/gdd-tool.exe"
+          $installerSource = Get-ChildItem "src-tauri/target/release/bundle/nsis/*.exe" | Select-Object -First 1
+
+          if (-not (Test-Path -LiteralPath $portableSource)) {
+            throw "Portable executable was not produced."
+          }
+
+          if (-not $installerSource) {
+            throw "NSIS installer was not produced."
+          }
+
+          $portable = Join-Path $releaseDirectory "GDD-Tool-portable.exe"
+          $installer = Join-Path $releaseDirectory "GDD-Tool-$version-x64-setup.exe"
+          Copy-Item -LiteralPath $portableSource -Destination $portable
+          Copy-Item -LiteralPath $installerSource.FullName -Destination $installer
+
+          "portable=$portable" >> $env:GITHUB_OUTPUT
+          "installer=$installer" >> $env:GITHUB_OUTPUT
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $portable = "${{ steps.files.outputs.portable }}"
+          $installer = "${{ steps.files.outputs.installer }}"
+
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $portable $installer --clobber --repo $env:GITHUB_REPOSITORY
+          } else {
+            gh release create $tag $portable $installer `
+              --repo $env:GITHUB_REPOSITORY `
+              --title "GDD Tool $tag" `
+              --generate-notes `
+              --latest
+          }
