@@ -1,7 +1,7 @@
 import type { ProjectModel } from './types';
 
 export type ValidationSeverity = 'error' | 'warning';
-export type ValidationIssue = { code: string; severity: ValidationSeverity; message: string; pageId?: string; nodeId?: string; relationId?: string };
+export type ValidationIssue = { code: string; severity: ValidationSeverity; message: string; pageId?: string; nodeId?: string; relationId?: string; groupId?: string };
 
 export function validateProject(project: ProjectModel): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
@@ -35,6 +35,23 @@ export function validateProject(project: ProjectModel): ValidationIssue[] {
     seenRelations.add(signature);
     if (source && target && (source.pageId !== edge.pageId || target.pageId !== edge.pageId)) issues.push({ code: 'cross-page-edge', severity: 'error', message: 'Bağlantı ve uçları aynı sayfada değil.', relationId: edge.id, pageId: edge.pageId });
   }
+
+  const groups = new Map(project.groups.map((group) => [group.id, group]));
+  for (const group of project.groups) {
+    if (!pages.has(group.pageId)) issues.push({ code: 'group-page-missing', severity: 'error', message: `Grubun sayfası bulunamadı: ${group.title}`, groupId: group.id, pageId: group.pageId });
+    if (!group.title.trim()) issues.push({ code: 'blank-group-title', severity: 'warning', message: 'Bir grubun adı boş.', groupId: group.id, pageId: group.pageId });
+    const members = new Set<string>();
+    for (const nodeId of group.memberNodeIds) {
+      if (members.has(nodeId)) issues.push({ code: 'duplicate-group-member', severity: 'warning', message: `Grup içinde aynı öğe birden fazla bulunuyor: ${nodeId}`, groupId: group.id, nodeId, pageId: group.pageId });
+      members.add(nodeId);
+      const node = nodes.get(nodeId);
+      if (!node || node.pageId !== group.pageId) issues.push({ code: 'invalid-group-member', severity: 'error', message: 'Grup üyesi bulunamadı veya başka bir sayfada.', groupId: group.id, nodeId, pageId: group.pageId });
+    }
+    if (group.parentGroupId && (!groups.has(group.parentGroupId) || groups.get(group.parentGroupId)?.pageId !== group.pageId)) issues.push({ code: 'invalid-group-parent', severity: 'error', message: 'Grubun üst grubu bulunamadı veya başka bir sayfada.', groupId: group.id, pageId: group.pageId });
+  }
+  const visitedGroups = new Set<string>(); const groupStack = new Set<string>();
+  const visitGroup = (id: string) => { if (groupStack.has(id)) { issues.push({ code: 'group-parent-cycle', severity: 'error', message: 'Grup üst hiyerarşisinde döngü bulundu.', groupId: id, pageId: groups.get(id)?.pageId }); return; } if (visitedGroups.has(id)) return; visitedGroups.add(id); groupStack.add(id); const parentId = groups.get(id)?.parentGroupId; if (parentId && groups.has(parentId)) visitGroup(parentId); groupStack.delete(id); };
+  for (const id of groups.keys()) visitGroup(id);
 
   const requires = project.relations.filter((edge) => edge.kind === 'requires' && nodes.has(edge.source) && nodes.has(edge.target));
   const adjacency = new Map<string, string[]>();

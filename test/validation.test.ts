@@ -12,13 +12,21 @@ describe('validation engine', () => {
     ];
     project.placements = [{ nodeId: 'a', pageId, x: 0, y: 0 }];
     project.relations = [
-      { id: 'e1', pageId, source: 'a', target: 'b', kind: 'requires' },
-      { id: 'e2', pageId, source: 'b', target: 'a', kind: 'requires' },
-      { id: 'e3', pageId, source: 'a', target: 'missing', kind: 'affects' },
-      { id: 'e4', pageId, source: 'a', target: 'missing', kind: 'affects' },
+      { id: 'e1', pageId, source: 'a', target: 'b', kind: 'requires', customLabel: '' },
+      { id: 'e2', pageId, source: 'b', target: 'a', kind: 'requires', customLabel: '' },
+      { id: 'e3', pageId, source: 'a', target: 'missing', kind: 'affects', customLabel: '' },
+      { id: 'e4', pageId, source: 'a', target: 'missing', kind: 'affects', customLabel: '' },
     ];
     const codes = validateProject(project).map((issue) => issue.code);
     expect(codes).toEqual(expect.arrayContaining(['invisible-node', 'broken-reference', 'duplicate-edge', 'requires-cycle']));
   });
   it('accepts a valid empty project', () => expect(validateProject(emptyProject())).toEqual([]));
+  it('reports invalid group members, duplicate members, blank titles and parent cycles', () => {
+    const project = emptyProject(); const pageId = project.activePageId;
+    const details = { status: 'draft' as const, tags: [], designIntent: '', playerExperience: '', specification: '', testNotes: '', properties: {} };
+    project.objects = [{ id: 'a', pageId, kind: 'mechanic', title: 'A', summary: '', ...details }];
+    project.groups = [{ id: 'g1', pageId, title: '', color: '#7058dd', memberNodeIds: ['a', 'a', 'missing'], parentGroupId: 'g2' }, { id: 'g2', pageId, title: 'Parent', color: '#19b8b2', memberNodeIds: [], parentGroupId: 'g1' }];
+    const codes = validateProject(project).map((issue) => issue.code);
+    expect(codes).toEqual(expect.arrayContaining(['blank-group-title', 'duplicate-group-member', 'invalid-group-member', 'group-parent-cycle']));
+  });
 });
