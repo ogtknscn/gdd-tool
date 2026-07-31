@@ -12,6 +12,13 @@ struct OpenedProject {
     snapshot: Value,
     path: String,
 }
+#[derive(Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecentProject {
+    path: String,
+    title: String,
+    opened_at: String,
+}
 
 #[cfg(windows)]
 fn replace_atomically(temp: &Path, target: &Path) -> Result<(), String> {
@@ -58,6 +65,13 @@ fn autosave_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
         .app_data_dir()
         .map_err(|error| error.to_string())?
         .join("autosave.gdd.json"))
+}
+fn recent_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    Ok(app
+        .path()
+        .app_data_dir()
+        .map_err(|error| error.to_string())?
+        .join("recent-projects.json"))
 }
 
 #[cfg(windows)]
@@ -129,10 +143,52 @@ fn load_project_snapshot(app: tauri::AppHandle) -> Result<Option<Value>, String>
         .map_err(|error| error.to_string())
 }
 #[tauri::command]
+fn clear_project_snapshot(app: tauri::AppHandle) -> Result<(), String> {
+    let target = autosave_path(&app)?;
+    if target.exists() {
+        fs::remove_file(target).map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+#[tauri::command]
+fn load_recent_projects(app: tauri::AppHandle) -> Result<Vec<RecentProject>, String> {
+    let target = recent_path(&app)?;
+    if !target.exists() {
+        return Ok(vec![]);
+    }
+    serde_json::from_str(&fs::read_to_string(target).map_err(|error| error.to_string())?)
+        .map_err(|error| error.to_string())
+}
+#[tauri::command]
+fn remember_recent_project(app: tauri::AppHandle, recent: RecentProject) -> Result<(), String> {
+    let mut items = load_recent_projects(app.clone())?;
+    items.retain(|item| item.path != recent.path);
+    items.insert(0, recent);
+    items.truncate(12);
+    write_json_atomically(
+        &recent_path(&app)?,
+        &serde_json::to_value(items).map_err(|error| error.to_string())?,
+    )
+}
+#[tauri::command]
 fn open_project_file() -> Result<Option<OpenedProject>, String> {
     let Some(path) = choose_project_file(false) else {
         return Ok(None);
     };
+    let snapshot =
+        serde_json::from_str(&fs::read_to_string(&path).map_err(|error| error.to_string())?)
+            .map_err(|error| error.to_string())?;
+    Ok(Some(OpenedProject {
+        snapshot,
+        path: path.to_string_lossy().into_owned(),
+    }))
+}
+#[tauri::command]
+fn open_recent_project(path: String) -> Result<Option<OpenedProject>, String> {
+    let path = PathBuf::from(path);
+    if !path.is_file() {
+        return Ok(None);
+    }
     let snapshot =
         serde_json::from_str(&fs::read_to_string(&path).map_err(|error| error.to_string())?)
             .map_err(|error| error.to_string())?;
@@ -161,7 +217,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             save_project_snapshot,
             load_project_snapshot,
+            clear_project_snapshot,
+            load_recent_projects,
+            remember_recent_project,
             open_project_file,
+            open_recent_project,
             save_project_file
         ])
         .run(tauri::generate_context!())

@@ -1,35 +1,15 @@
 import { parseAndMigrateProject } from './project';
 import { ProjectSchema, type ProjectModel } from './types';
-
-const key = 'gdd-tool:project-snapshot';
-const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-export type OpenedProject = { project: ProjectModel; path: string };
-
-/** Recovery autosave never changes the explicit file's clean/dirty state. */
-export async function saveRecoverySnapshot(project: ProjectModel): Promise<void> {
-  const snapshot = ProjectSchema.parse(project);
-  if (isTauri()) { const { invoke } = await import('@tauri-apps/api/core'); await invoke('save_project_snapshot', { snapshot }); return; }
-  localStorage.setItem(key, JSON.stringify(snapshot));
-}
-export async function loadRecoverySnapshot(): Promise<ProjectModel | null> {
-  let value: unknown = null;
-  if (isTauri()) { const { invoke } = await import('@tauri-apps/api/core'); value = await invoke('load_project_snapshot'); }
-  else { const raw = localStorage.getItem(key); value = raw ? JSON.parse(raw) : null; }
-  return value ? parseAndMigrateProject(value) : null;
-}
-export async function openProjectFile(): Promise<OpenedProject | null> {
-  if (!isTauri()) return null;
-  const { invoke } = await import('@tauri-apps/api/core');
-  const result = await invoke<{ snapshot: unknown; path: string } | null>('open_project_file');
-  return result ? { project: parseAndMigrateProject(result.snapshot), path: result.path } : null;
-}
-export async function saveProjectFile(project: ProjectModel, path?: string, saveAs = false): Promise<string | null> {
-  const snapshot = ProjectSchema.parse(project);
-  if (!isTauri()) { localStorage.setItem(key, JSON.stringify(snapshot)); return path ?? 'browser:gdd-project.json'; }
-  const { invoke } = await import('@tauri-apps/api/core');
-  return invoke<string | null>('save_project_file', { snapshot, path: saveAs ? null : path ?? null });
-}
-
-// Previous names remain available for existing integrations.
-export const saveProjectSnapshot = saveRecoverySnapshot;
-export const loadProjectSnapshot = loadRecoverySnapshot;
+const recoveryKey = 'gdd-tool:project-snapshot'; const recentKey = 'gdd-tool:recent-projects'; const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+export type OpenedProject = { project: ProjectModel; path: string }; export type RecentProject = { path: string; title: string; openedAt: string };
+type RecoveryEnvelope = { kind: 'gdd-recovery'; version: 1; savedAt: string; project: ProjectModel };
+const recoveryEnvelope = (project: ProjectModel): RecoveryEnvelope => ({ kind: 'gdd-recovery', version: 1, savedAt: new Date().toISOString(), project: ProjectSchema.parse(project) });
+export async function saveRecoverySnapshot(project: ProjectModel): Promise<void> { const snapshot = recoveryEnvelope(project); if (isTauri()) { const { invoke } = await import('@tauri-apps/api/core'); await invoke('save_project_snapshot', { snapshot }); return; } localStorage.setItem(recoveryKey, JSON.stringify(snapshot)); }
+export async function clearRecoverySnapshot(): Promise<void> { if (isTauri()) { const { invoke } = await import('@tauri-apps/api/core'); await invoke('clear_project_snapshot'); return; } localStorage.removeItem(recoveryKey); }
+export async function loadRecoverySnapshot(): Promise<ProjectModel | null> { let value: unknown = null; if (isTauri()) { const { invoke } = await import('@tauri-apps/api/core'); value = await invoke('load_project_snapshot'); } else { const raw = localStorage.getItem(recoveryKey); value = raw ? JSON.parse(raw) : null; } if (!value) return null; const envelope = value as Partial<RecoveryEnvelope>; return parseAndMigrateProject(envelope.kind === 'gdd-recovery' ? envelope.project : value); }
+const remember = async (recent: RecentProject) => { if (isTauri()) { const { invoke } = await import('@tauri-apps/api/core'); await invoke('remember_recent_project', { recent }); return; } const existing = JSON.parse(localStorage.getItem(recentKey) ?? '[]') as RecentProject[]; localStorage.setItem(recentKey, JSON.stringify([recent, ...existing.filter((item) => item.path !== recent.path)].slice(0, 12))); };
+export async function loadRecentProjects(): Promise<RecentProject[]> { if (isTauri()) { const { invoke } = await import('@tauri-apps/api/core'); return invoke('load_recent_projects'); } return JSON.parse(localStorage.getItem(recentKey) ?? '[]') as RecentProject[]; }
+export async function openProjectFile(): Promise<OpenedProject | null> { if (!isTauri()) return null; const { invoke } = await import('@tauri-apps/api/core'); const result = await invoke<{ snapshot: unknown; path: string } | null>('open_project_file'); if (!result) return null; const project = parseAndMigrateProject(result.snapshot); await remember({ path: result.path, title: project.title, openedAt: new Date().toISOString() }); return { project, path: result.path }; }
+export async function openRecentProject(path: string): Promise<OpenedProject | null> { if (!isTauri()) return null; const { invoke } = await import('@tauri-apps/api/core'); const result = await invoke<{ snapshot: unknown; path: string } | null>('open_recent_project', { path }); if (!result) return null; const project = parseAndMigrateProject(result.snapshot); await remember({ path: result.path, title: project.title, openedAt: new Date().toISOString() }); return { project, path: result.path }; }
+export async function saveProjectFile(project: ProjectModel, path?: string, saveAs = false): Promise<string | null> { const snapshot = ProjectSchema.parse(project); if (!isTauri()) { localStorage.setItem(recoveryKey, JSON.stringify(snapshot)); return path ?? 'browser:gdd-project.json'; } const { invoke } = await import('@tauri-apps/api/core'); const saved = await invoke<string | null>('save_project_file', { snapshot, path: saveAs ? null : path ?? null }); if (saved) await remember({ path: saved, title: snapshot.title, openedAt: new Date().toISOString() }); return saved; }
+export const saveProjectSnapshot = saveRecoverySnapshot; export const loadProjectSnapshot = loadRecoverySnapshot;
