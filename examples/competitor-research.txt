@@ -1,0 +1,9 @@
+Ekip arkadaşlarımın kendi bilgisayarlarında kullanabileceği yenilikçi bir GDD üretim aracı geliştiriyorum.
+İnternetten güncel bir rakip araştırması yap:
+
+- Doğrudan ve dolaylı rakipleri belirle.
+- Hedef kullanıcı, temel özellikler, işbirliği, dışa aktarma, AI kullanımı ve fiyatlandırmayı karşılaştır.
+- Kullanıcı yorumlarından tekrar eden sorunları ayır.
+- Pazardaki boşlukları ve farklılaşma fırsatlarını çıkar.
+- Bulguları GDD Tool ürün yol haritasına dönüşebilecek somut önerilerle bitir.
+- En az 10 güvenilir ve güncel kaynak kullan; önemli iddiaları bağlantılarla destekle.

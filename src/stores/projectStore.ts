@@ -1,0 +1,53 @@
+import { create } from 'zustand';
+import { createId, createObject, emptyProject, touch } from '../domain/project';
+import { findTemplate, type TemplateId } from '../domain/templates';
+import type { EdgeKind, GddNode, NodeKind, ProjectModel } from '../domain/types';
+
+const copy = (project: ProjectModel): ProjectModel => JSON.parse(JSON.stringify(project)) as ProjectModel;
+const fingerprint = (project: ProjectModel): string => {
+  const { updatedAt: _updatedAt, activePageId: _activePageId, ...content } = project;
+  return JSON.stringify(content);
+};
+type State = {
+  project: ProjectModel; selectedNodeId?: string; detailNodeId?: string; currentFilePath?: string; dirty: boolean; savedFingerprint?: string; undoStack: ProjectModel[]; redoStack: ProjectModel[];
+  select: (id?: string) => void; openDetail: (id: string) => void; closeDetail: () => void; applyTemplate: (id: TemplateId) => void; newProject: () => void;
+  setActivePage: (id: string) => void; addPage: (title?: string) => void; renamePage: (id: string, title: string) => void; deletePage: (id: string) => void;
+  addNode: (kind: NodeKind) => void; duplicateNode: (id: string) => void; removeNode: (id: string) => void; updateNode: (id: string, patch: Partial<Pick<GddNode, 'title' | 'summary' | 'status' | 'tags' | 'designIntent' | 'playerExperience' | 'specification' | 'testNotes' | 'properties'>>) => void;
+  moveNode: (id: string, x: number, y: number) => void; addRelation: (source: string, target: string, kind: EdgeKind) => void;
+  removeRelation: (id: string) => void; undo: () => void; redo: () => void; replaceProject: (project: ProjectModel, filePath?: string, recovered?: boolean) => void;
+  markSaved: (filePath?: string) => void;
+};
+
+const mutate = (set: (partial: Partial<State>) => void, get: () => State, recipe: (project: ProjectModel) => ProjectModel) => {
+  const before = copy(get().project); const next = recipe(copy(before));
+  if (JSON.stringify(before) === JSON.stringify(next)) return;
+  const project = touch(next);
+  set({ project, undoStack: [...get().undoStack, before], redoStack: [], dirty: fingerprint(project) !== get().savedFingerprint });
+};
+
+export const useProjectStore = create<State>((set, get) => ({
+  project: emptyProject(), dirty: false, undoStack: [], redoStack: [],
+  select: (selectedNodeId) => set({ selectedNodeId }),
+  openDetail: (detailNodeId) => set({ detailNodeId, selectedNodeId: detailNodeId }), closeDetail: () => set({ detailNodeId: undefined }),
+  applyTemplate: (id) => { const project = findTemplate(id).create(); set({ project, selectedNodeId: project.objects[0]?.id, detailNodeId: undefined, currentFilePath: undefined, savedFingerprint: undefined, dirty: true, undoStack: [], redoStack: [] }); },
+  newProject: () => { const project = emptyProject(); set({ project, selectedNodeId: undefined, detailNodeId: undefined, currentFilePath: undefined, savedFingerprint: fingerprint(project), dirty: false, undoStack: [], redoStack: [] }); },
+  setActivePage: (id) => { if (!get().project.pages.some((page) => page.id === id)) return; set({ project: { ...get().project, activePageId: id }, selectedNodeId: undefined, detailNodeId: undefined }); },
+  addPage: (title = 'Yeni Sayfa') => mutate(set, get, (project) => { const id = createId('page'); return { ...project, pages: [...project.pages, { id, title }], activePageId: id }; }),
+  renamePage: (id, title) => mutate(set, get, (project) => ({ ...project, pages: project.pages.map((page) => page.id === id ? { ...page, title: title.trim() || 'İsimsiz Sayfa' } : page) })),
+  deletePage: (id) => mutate(set, get, (project) => {
+    if (project.pages.length === 1) return project;
+    const pages = project.pages.filter((page) => page.id !== id); const nodeIds = new Set(project.objects.filter((node) => node.pageId === id).map((node) => node.id));
+    return { ...project, pages, activePageId: project.activePageId === id ? pages[0].id : project.activePageId, objects: project.objects.filter((node) => node.pageId !== id), placements: project.placements.filter((place) => place.pageId !== id && !nodeIds.has(place.nodeId)), relations: project.relations.filter((edge) => edge.pageId !== id && !nodeIds.has(edge.source) && !nodeIds.has(edge.target)) };
+  }),
+  addNode: (kind) => mutate(set, get, (project) => { const object = createObject(kind, project.activePageId); const count = project.objects.filter((node) => node.pageId === project.activePageId).length; return { ...project, objects: [...project.objects, object], placements: [...project.placements, { nodeId: object.id, pageId: project.activePageId, x: 180 + count * 30, y: 180 + count * 30 }] }; }),
+  duplicateNode: (id) => mutate(set, get, (project) => { const source = project.objects.find((node) => node.id === id); if (!source) return project; const duplicateId = createId(source.kind); const place = project.placements.find((item) => item.nodeId === id); const duplicate = { ...copy({ ...project, objects: [source] }).objects[0], id: duplicateId, title: `${source.title} kopyası` }; return { ...project, objects: [...project.objects, duplicate], placements: [...project.placements, { nodeId: duplicateId, pageId: source.pageId, x: (place?.x ?? 180) + 36, y: (place?.y ?? 180) + 36 }] }; }),
+  removeNode: (id) => mutate(set, get, (project) => ({ ...project, objects: project.objects.filter((node) => node.id !== id), placements: project.placements.filter((place) => place.nodeId !== id), relations: project.relations.filter((edge) => edge.source !== id && edge.target !== id) })),
+  updateNode: (id, patch) => mutate(set, get, (project) => ({ ...project, objects: project.objects.map((object) => object.id === id ? { ...object, ...patch } : object) })),
+  moveNode: (id, x, y) => mutate(set, get, (project) => ({ ...project, placements: project.placements.map((place) => place.nodeId === id ? { ...place, x, y } : place) })),
+  addRelation: (source, target, kind) => mutate(set, get, (project) => source === target || project.relations.some((edge) => edge.source === source && edge.target === target && edge.kind === kind) ? project : { ...project, relations: [...project.relations, { id: createId('edge'), pageId: project.activePageId, source, target, kind }] }),
+  removeRelation: (id) => mutate(set, get, (project) => ({ ...project, relations: project.relations.filter((edge) => edge.id !== id) })),
+  undo: () => { const { undoStack, project, redoStack, savedFingerprint } = get(); if (!undoStack.length) return; const previous = undoStack.at(-1)!; set({ project: previous, selectedNodeId: undefined, detailNodeId: undefined, undoStack: undoStack.slice(0, -1), redoStack: [copy(project), ...redoStack], dirty: fingerprint(previous) !== savedFingerprint }); },
+  redo: () => { const { redoStack, project, undoStack, savedFingerprint } = get(); if (!redoStack.length) return; const next = redoStack[0]; set({ project: next, selectedNodeId: undefined, detailNodeId: undefined, redoStack: redoStack.slice(1), undoStack: [...undoStack, copy(project)], dirty: fingerprint(next) !== savedFingerprint }); },
+  replaceProject: (project, currentFilePath, recovered = false) => set({ project: copy(project), selectedNodeId: undefined, detailNodeId: undefined, currentFilePath, savedFingerprint: recovered ? undefined : fingerprint(project), dirty: recovered, undoStack: [], redoStack: [] }),
+  markSaved: (currentFilePath) => set((state) => ({ dirty: false, savedFingerprint: fingerprint(state.project), currentFilePath: currentFilePath ?? state.currentFilePath })),
+}));

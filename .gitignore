@@ -1,0 +1,13 @@
+# İşletim sistemi ve editör dosyaları
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Geçici geliştirme çıktıları
+tmp/
+*.log
+node_modules/
+dist/
+src-tauri/target/
+artifacts/

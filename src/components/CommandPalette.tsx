@@ -1,0 +1,13 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { APP_COMMANDS, type AppCommandId } from '../commands/appCommands';
+import { useUiStore } from '../stores/uiStore';
+
+export function CommandPalette({ run }: { run: (id: AppCommandId) => void }) {
+  const open = useUiStore((state) => state.paletteOpen); const setOpen = useUiStore((state) => state.setPaletteOpen); const [query, setQuery] = useState(''); const [activeIndex, setActiveIndex] = useState(0); const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (open) { setQuery(''); setActiveIndex(0); window.setTimeout(() => inputRef.current?.focus()); } }, [open]);
+  useEffect(() => { if (!open) return; const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close); }, [open, setOpen]);
+  const commands = useMemo(() => APP_COMMANDS.filter((command) => command.label.toLocaleLowerCase('tr').includes(query.toLocaleLowerCase('tr'))), [query]);
+  useEffect(() => setActiveIndex(0), [query]);
+  if (!open) return null;
+  return <div className="command-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}><section className="command-palette" role="dialog" aria-modal="true" aria-label="Komut paleti"><input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape') setOpen(false); else if (event.key === 'ArrowDown' && commands.length) { event.preventDefault(); setActiveIndex((index) => (index + 1) % commands.length); } else if (event.key === 'ArrowUp' && commands.length) { event.preventDefault(); setActiveIndex((index) => (index - 1 + commands.length) % commands.length); } else if (event.key === 'Enter' && commands[activeIndex]) { event.preventDefault(); run(commands[activeIndex].id); setOpen(false); } }} placeholder="Komut ara…" aria-label="Komut ara" aria-controls="command-results" aria-activedescendant={commands[activeIndex] ? `command-${commands[activeIndex].id}` : undefined} /><div id="command-results" role="listbox">{commands.map((command, index) => <button id={`command-${command.id}`} role="option" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} key={command.id} onMouseEnter={() => setActiveIndex(index)} onClick={() => { run(command.id); setOpen(false); }}><span><small>{command.group}</small>{command.label}</span>{command.shortcut && <kbd>{command.shortcut}</kbd>}</button>)}{!commands.length && <p>Komut bulunamadı.</p>}</div></section></div>;
+}
