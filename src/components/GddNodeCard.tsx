@@ -26,6 +26,6 @@ export function GddNodeCard({ id, data, selected, dragging }: NodeProps<Node<Gdd
     <div className="card-kicker"><span>{NODE_LABELS[item.kind]}</span><span className={`status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></div>
     <strong className="card-title">{item.title}</strong>
     {data.density !== 'compact' && <p>{item.summary || 'Açıklama ekleyin'}</p>}
-    {data.density === 'detailed' && <div className="card-meta"><span>{item.tags.slice(0, 2).join(' · ') || 'Etiket yok'}</span><span>{item.tags.length > 2 ? `+${item.tags.length - 2}` : ''}</span></div>}
+    {data.density === 'detailed' && <><div className="card-meta"><span>{item.tags.slice(0, 2).join(' · ') || 'Etiket yok'}</span><span>{item.tags.length > 2 ? `+${item.tags.length - 2}` : ''}</span></div>{item.checklist.length > 0 && <div className="card-checklist-progress" aria-label={`Checklist: ${item.checklist.filter((entry) => entry.done).length}/${item.checklist.length}`}><span>Checklist</span><b>{item.checklist.filter((entry) => entry.done).length}/{item.checklist.length}</b></div>}</>}
   </div>;
 }

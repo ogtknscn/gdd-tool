@@ -9,11 +9,13 @@ export type NodeStatus = (typeof nodeStatuses)[number];
 
 export const GddPageSchema = z.object({ id: z.string().min(1), title: z.string().min(1) });
 export type GddPage = z.infer<typeof GddPageSchema>;
+export const ChecklistItemSchema = z.object({ id: z.string().min(1), text: z.string(), done: z.boolean() });
+export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
 export const GddNodeSchema = z.object({
   id: z.string().min(1), pageId: z.string().min(1), kind: z.enum(nodeKinds), title: z.string().min(1),
   summary: z.string().default(''), status: z.enum(nodeStatuses).default('draft'), tags: z.array(z.string()).default([]),
   designIntent: z.string().default(''), playerExperience: z.string().default(''), specification: z.string().default(''), testNotes: z.string().default(''),
-  properties: z.record(z.string(), z.string()).default({}),
+  properties: z.record(z.string(), z.string()).default({}), checklist: z.array(ChecklistItemSchema),
 });
 export type GddNode = z.infer<typeof GddNodeSchema>;
 export const PlacementSchema = z.object({ nodeId: z.string(), pageId: z.string(), x: z.number(), y: z.number() });
@@ -24,7 +26,7 @@ export type GddEdge = z.infer<typeof GddEdgeSchema>;
 export const GddGroupSchema = z.object({ id: z.string().min(1), pageId: z.string().min(1), title: z.string(), color: z.string().min(1), memberNodeIds: z.array(z.string()), parentGroupId: z.string().min(1).optional() });
 export type GddGroup = z.infer<typeof GddGroupSchema>;
 export const ProjectSchema = z.object({
-  schemaVersion: z.literal(4), id: z.string(), title: z.string(), updatedAt: z.string(),
+  schemaVersion: z.literal(5), id: z.string(), title: z.string(), updatedAt: z.string(),
   pages: z.array(GddPageSchema).min(1), activePageId: z.string().min(1),
   objects: z.array(GddNodeSchema), placements: z.array(PlacementSchema), relations: z.array(GddEdgeSchema), groups: z.array(GddGroupSchema),
 });

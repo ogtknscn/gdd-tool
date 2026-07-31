@@ -5,7 +5,7 @@ import { validateProject } from '../src/domain/validation';
 describe('validation engine', () => {
   it('detects broken references, invisible items, duplicates and requires cycles', () => {
     const project = emptyProject(); const pageId = project.activePageId;
-    const details = { status: 'draft' as const, tags: [], designIntent: '', playerExperience: '', specification: '', testNotes: '', properties: {} };
+    const details = { status: 'draft' as const, tags: [], designIntent: '', playerExperience: '', specification: '', testNotes: '', properties: {}, checklist: [] };
     project.objects = [
       { id: 'a', pageId, kind: 'mechanic', title: 'A', summary: '', ...details },
       { id: 'b', pageId, kind: 'mechanic', title: 'B', summary: '', ...details },
@@ -23,7 +23,7 @@ describe('validation engine', () => {
   it('accepts a valid empty project', () => expect(validateProject(emptyProject())).toEqual([]));
   it('reports invalid group members, duplicate members, blank titles and parent cycles', () => {
     const project = emptyProject(); const pageId = project.activePageId;
-    const details = { status: 'draft' as const, tags: [], designIntent: '', playerExperience: '', specification: '', testNotes: '', properties: {} };
+    const details = { status: 'draft' as const, tags: [], designIntent: '', playerExperience: '', specification: '', testNotes: '', properties: {}, checklist: [] };
     project.objects = [{ id: 'a', pageId, kind: 'mechanic', title: 'A', summary: '', ...details }];
     project.groups = [{ id: 'g1', pageId, title: '', color: '#7058dd', memberNodeIds: ['a', 'a', 'missing'], parentGroupId: 'g2' }, { id: 'g2', pageId, title: 'Parent', color: '#19b8b2', memberNodeIds: [], parentGroupId: 'g1' }];
     const codes = validateProject(project).map((issue) => issue.code);

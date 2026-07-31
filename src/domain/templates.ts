@@ -3,7 +3,7 @@ import type { GddEdge, GddGroup, GddNode, Placement, ProjectModel } from './type
 
 export type TemplateId = 'blank' | 'core-loop' | 'quest' | 'puzzle-level' | 'puzzle-tutorial';
 export type ProjectTemplate = { id: TemplateId; name: string; description: string; category: string; useCase: string; startingCounts: string; preview: string; create: () => ProjectModel };
-const node = (id: string, pageId: string, kind: GddNode['kind'], title: string, summary = ''): GddNode => ({ id, pageId, kind, title, summary, status: 'draft', tags: [], designIntent: '', playerExperience: '', specification: '', testNotes: '', properties: {} });
+const node = (id: string, pageId: string, kind: GddNode['kind'], title: string, summary = ''): GddNode => ({ id, pageId, kind, title, summary, status: 'draft', tags: [], designIntent: '', playerExperience: '', specification: '', testNotes: '', properties: {}, checklist: [] });
 const edge = (id: string, pageId: string, source: string, target: string, kind: GddEdge['kind']): GddEdge => ({ id, pageId, source, target, kind, customLabel: '' });
 const placement = (nodeId: string, pageId: string, x: number, y: number): Placement => ({ nodeId, pageId, x, y });
 type GroupDefinition = [id: string, title: string, color: string, members: string[]];

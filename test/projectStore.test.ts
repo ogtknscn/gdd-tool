@@ -56,6 +56,12 @@ describe('project store', () => {
     expect(useProjectStore.getState().project.groups).toHaveLength(0);
     expect(useProjectStore.getState().project.objects).toHaveLength(2); expect(useProjectStore.getState().project.relations).toHaveLength(1);
   });
+  it('updates checklist items atomically and assigns fresh ids when duplicating', () => {
+    const store = useProjectStore.getState(); store.addNode('mechanic'); const node = useProjectStore.getState().project.objects[0]; const undoBefore = useProjectStore.getState().undoStack.length;
+    store.addChecklistItem(node.id, 'Kapıyı test et'); const item = useProjectStore.getState().project.objects[0].checklist[0]; store.toggleChecklistItem(node.id, item.id); store.updateChecklistItem(node.id, item.id, 'Kapıyı yeniden test et');
+    expect(useProjectStore.getState().project.objects[0].checklist[0]).toMatchObject({ text: 'Kapıyı yeniden test et', done: true });
+    expect(useProjectStore.getState().undoStack).toHaveLength(undoBefore + 3); store.duplicateNode(node.id); const duplicate = useProjectStore.getState().project.objects.at(-1)!; expect(duplicate.checklist[0].id).not.toBe(item.id);
+  });
   it('keeps page content isolated and removes it with its page', () => {
     const store = useProjectStore.getState(); store.addNode('mechanic');
     const firstPage = useProjectStore.getState().project.activePageId;
