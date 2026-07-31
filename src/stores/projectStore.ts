@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createId, createObject, emptyProject, touch } from '../domain/project';
 import { findTemplate, type TemplateId } from '../domain/templates';
-import { MAX_EDGE_LABEL_LENGTH, type EdgeKind, type GddEdge, type GddGroup, type GddNode, type NodeKind, type ProjectModel } from '../domain/types';
+import { MAX_EDGE_LABEL_LENGTH, type EdgeKind, type GddEdge, type GddGroup, type GddNode, type NodeKind, type PlaygroundItem, type ProjectModel } from '../domain/types';
 
 const copy = (project: ProjectModel): ProjectModel => JSON.parse(JSON.stringify(project)) as ProjectModel;
 const fingerprint = (project: ProjectModel): string => {
@@ -15,6 +15,7 @@ type State = {
   addNode: (kind: NodeKind) => void; addNodeAt: (kind: NodeKind, position: { x: number; y: number }, sourceId?: string, edgeKind?: EdgeKind) => void; duplicateNode: (id: string) => void; removeNode: (id: string) => void; updateNode: (id: string, patch: Partial<Pick<GddNode, 'title' | 'summary' | 'status' | 'tags' | 'designIntent' | 'playerExperience' | 'specification' | 'testNotes' | 'properties'>>) => void; addChecklistItem: (nodeId: string, text?: string) => void; updateChecklistItem: (nodeId: string, itemId: string, text: string) => void; toggleChecklistItem: (nodeId: string, itemId: string) => void; removeChecklistItem: (nodeId: string, itemId: string) => void; moveChecklistItem: (nodeId: string, itemId: string, direction: -1 | 1) => void;
   createGroup: (title: string, color: string, memberNodeIds: string[]) => void; updateGroup: (id: string, patch: Partial<Pick<GddGroup, 'title' | 'color' | 'parentGroupId' | 'collapsed'>>) => void; deleteGroup: (id: string) => void; addGroupMembers: (id: string, nodeIds: string[]) => void; removeGroupMembers: (id: string, nodeIds: string[]) => void; moveGroup: (id: string, delta: { x: number; y: number }) => void;
   moveNode: (id: string, x: number, y: number) => void; addRelation: (source: string, target: string, kind: EdgeKind) => void;
+  addPlaygroundItem: (type: PlaygroundItem['type'], text?: string) => void; updatePlaygroundItem: (id: string, text: string) => void; removePlaygroundItem: (id: string) => void;
   updateRelation: (id: string, patch: Partial<Pick<GddEdge, 'customLabel'>>) => void; removeRelation: (id: string) => void; undo: () => void; redo: () => void; replaceProject: (project: ProjectModel, filePath?: string, recovered?: boolean) => void;
   markSaved: (filePath?: string) => void;
 };
@@ -69,6 +70,9 @@ export const useProjectStore = create<State>((set, get) => ({
   removeGroupMembers: (id, nodeIds) => mutate(set, get, (project) => { const members = new Set(nodeIds); return { ...project, groups: project.groups.map((group) => group.id === id ? { ...group, memberNodeIds: group.memberNodeIds.filter((nodeId) => !members.has(nodeId)) } : group) }; }),
   moveGroup: (id, delta) => mutate(set, get, (project) => { const group = project.groups.find((candidate) => candidate.id === id); if (!group || (!delta.x && !delta.y)) return project; const members = new Set(group.memberNodeIds); return { ...project, placements: project.placements.map((place) => place.pageId === group.pageId && members.has(place.nodeId) ? { ...place, x: place.x + delta.x, y: place.y + delta.y } : place) }; }),
   moveNode: (id, x, y) => mutate(set, get, (project) => ({ ...project, placements: project.placements.map((place) => place.nodeId === id ? { ...place, x, y } : place) })),
+  addPlaygroundItem: (type, text = '') => mutate(set, get, (project) => ({ ...project, playgroundItems: [...project.playgroundItems, { id: createId('playground'), pageId: project.activePageId, type, text, x: 36 + project.playgroundItems.length * 18, y: 80 + project.playgroundItems.length * 18 }] })),
+  updatePlaygroundItem: (id, text) => mutate(set, get, (project) => ({ ...project, playgroundItems: project.playgroundItems.map((item) => item.id === id ? { ...item, text } : item) })),
+  removePlaygroundItem: (id) => mutate(set, get, (project) => ({ ...project, playgroundItems: project.playgroundItems.filter((item) => item.id !== id) })),
   addRelation: (source, target, kind) => mutate(set, get, (project) => source === target || project.relations.some((edge) => edge.source === source && edge.target === target && edge.kind === kind) ? project : { ...project, relations: [...project.relations, { id: createId('edge'), pageId: project.activePageId, source, target, kind, customLabel: '' }] }),
   updateRelation: (id, patch) => mutate(set, get, (project) => ({ ...project, relations: project.relations.map((edge) => edge.id === id ? { ...edge, ...patch, customLabel: (patch.customLabel ?? edge.customLabel).slice(0, MAX_EDGE_LABEL_LENGTH) } : edge) })),
   removeRelation: (id) => mutate(set, get, (project) => ({ ...project, relations: project.relations.filter((edge) => edge.id !== id) })),

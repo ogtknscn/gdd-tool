@@ -6,12 +6,9 @@ use std::{
 };
 use tauri::Manager;
 
-fn pdf_safe_text(value: &str) -> String {
-    value.chars().map(|character| match character { 'ç' => 'c', 'Ç' => 'C', 'ğ' => 'g', 'Ğ' => 'G', 'ı' => 'i', 'İ' => 'I', 'ö' => 'o', 'Ö' => 'O', 'ş' => 's', 'Ş' => 'S', 'ü' => 'u', 'Ü' => 'U', character if character.is_ascii() => character, _ => '?' }).collect()
-}
 fn pdf_lines(snapshot: &Value) -> Vec<String> {
-    let mut lines = vec![format!("GDD Tool - {}", pdf_safe_text(snapshot.get("title").and_then(Value::as_str).unwrap_or("Project")))];
-    if let Some(objects) = snapshot.get("objects").and_then(Value::as_array) { for object in objects { let title = pdf_safe_text(object.get("title").and_then(Value::as_str).unwrap_or("Untitled")); let kind = pdf_safe_text(object.get("kind").and_then(Value::as_str).unwrap_or("item")); let summary = pdf_safe_text(object.get("summary").and_then(Value::as_str).unwrap_or("")); lines.push(format!("{} [{}]", title, kind)); if !summary.is_empty() { lines.push(format!("  {}", summary)); } } }
+    let mut lines = vec![format!("GDD Tool - {}", snapshot.get("title").and_then(Value::as_str).unwrap_or("Project"))];
+    if let Some(objects) = snapshot.get("objects").and_then(Value::as_array) { for object in objects { let title = object.get("title").and_then(Value::as_str).unwrap_or("Untitled"); let kind = object.get("kind").and_then(Value::as_str).unwrap_or("item"); let summary = object.get("summary").and_then(Value::as_str).unwrap_or(""); lines.push(format!("{} [{}]", title, kind)); if !summary.is_empty() { lines.push(format!("  {}", summary)); } } }
     lines
 }
 
@@ -223,9 +220,9 @@ fn save_project_file(snapshot: Value, path: Option<String>) -> Result<Option<Str
 #[tauri::command]
 fn export_project_pdf(app: tauri::AppHandle, snapshot: Value) -> Result<String, String> {
     use printpdf::{BuiltinFont, Mm, Op, PdfDocument, PdfPage, PdfSaveOptions, Point, Pt, TextItem};
-    let title = pdf_safe_text(snapshot.get("title").and_then(Value::as_str).unwrap_or("gdd-project"));
+    let lines = pdf_lines(&snapshot); if lines.iter().any(|line| !line.is_ascii()) { return Err("Bu projede Unicode karakterler var; yerel Unicode PDF fontu yapılandırılmadı. PDF dışa aktarma güvenle durduruldu.".to_string()); } let title = snapshot.get("title").and_then(Value::as_str).unwrap_or("gdd-project").to_string();
     let mut doc = PdfDocument::new(&title); let mut pages = Vec::new(); let mut ops = vec![Op::StartTextSection, Op::SetFontSizeBuiltinFont { size: Pt(15.0), font: BuiltinFont::Helvetica }, Op::SetTextCursor { pos: Point::new(Mm(18.0), Mm(280.0)) }]; let mut y = 280.0_f32;
-    for (index, line) in pdf_lines(&snapshot).into_iter().enumerate() { if index == 1 { ops.push(Op::SetFontSizeBuiltinFont { size: Pt(10.0), font: BuiltinFont::Helvetica }); } if y < 20.0 { ops.push(Op::EndTextSection); pages.push(PdfPage::new(Mm(210.0), Mm(297.0), ops)); ops = vec![Op::StartTextSection, Op::SetFontSizeBuiltinFont { size: Pt(10.0), font: BuiltinFont::Helvetica }, Op::SetTextCursor { pos: Point::new(Mm(18.0), Mm(280.0)) }]; y = 280.0; } ops.push(Op::WriteTextBuiltinFont { items: vec![TextItem::Text(line)], font: BuiltinFont::Helvetica }); ops.push(Op::AddLineBreak); y -= 6.0; }
+    for (index, line) in lines.into_iter().enumerate() { if index == 1 { ops.push(Op::SetFontSizeBuiltinFont { size: Pt(10.0), font: BuiltinFont::Helvetica }); } if y < 20.0 { ops.push(Op::EndTextSection); pages.push(PdfPage::new(Mm(210.0), Mm(297.0), ops)); ops = vec![Op::StartTextSection, Op::SetFontSizeBuiltinFont { size: Pt(10.0), font: BuiltinFont::Helvetica }, Op::SetTextCursor { pos: Point::new(Mm(18.0), Mm(280.0)) }]; y = 280.0; } ops.push(Op::WriteTextBuiltinFont { items: vec![TextItem::Text(line)], font: BuiltinFont::Helvetica }); ops.push(Op::AddLineBreak); y -= 6.0; }
     ops.push(Op::EndTextSection); pages.push(PdfPage::new(Mm(210.0), Mm(297.0), ops)); let bytes = doc.with_pages(pages).save(&PdfSaveOptions::default(), &mut Vec::new()); let directory = app.path().app_data_dir().map_err(|error| error.to_string())?.join("exports"); fs::create_dir_all(&directory).map_err(|error| error.to_string())?; let path = directory.join(format!("{}.pdf", title.replace(['\\', '/', ':'], "-"))); fs::write(&path, bytes).map_err(|error| error.to_string())?; Ok(path.to_string_lossy().into_owned())
 }
 

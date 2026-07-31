@@ -25,10 +25,12 @@ export const GddEdgeSchema = z.object({ id: z.string().min(1), pageId: z.string(
 export type GddEdge = z.infer<typeof GddEdgeSchema>;
 export const GddGroupSchema = z.object({ id: z.string().min(1), pageId: z.string().min(1), title: z.string(), color: z.string().min(1), memberNodeIds: z.array(z.string()), parentGroupId: z.string().min(1).optional(), collapsed: z.boolean().default(false) });
 export type GddGroup = z.infer<typeof GddGroupSchema>;
+export const PlaygroundItemSchema = z.object({ id: z.string().min(1), pageId: z.string().min(1), type: z.enum(['sticky', 'text', 'comment']), text: z.string(), x: z.number(), y: z.number() });
+export type PlaygroundItem = z.infer<typeof PlaygroundItemSchema>;
 export const ProjectSchema = z.object({
-  schemaVersion: z.literal(6), id: z.string(), title: z.string(), updatedAt: z.string(),
+  schemaVersion: z.literal(7), id: z.string(), title: z.string(), updatedAt: z.string(),
   pages: z.array(GddPageSchema).min(1), activePageId: z.string().min(1),
-  objects: z.array(GddNodeSchema), placements: z.array(PlacementSchema), relations: z.array(GddEdgeSchema), groups: z.array(GddGroupSchema),
+  objects: z.array(GddNodeSchema), placements: z.array(PlacementSchema), relations: z.array(GddEdgeSchema), groups: z.array(GddGroupSchema), playgroundItems: z.array(PlaygroundItemSchema),
 });
 export type ProjectModel = z.infer<typeof ProjectSchema>;
 

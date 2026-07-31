@@ -9,6 +9,7 @@ import { Inspector } from './components/Inspector';
 import { NodeDetailPanel } from './components/NodeDetailPanel';
 import { Outline } from './components/Outline';
 import { PageTabs } from './components/PageTabs';
+import { PlaygroundTools } from './components/PlaygroundTools';
 import { ShortcutHelp } from './components/ShortcutHelp';
 import { StartScreen } from './components/StartScreen';
 import { TemplateWelcome } from './components/TemplateWelcome';
