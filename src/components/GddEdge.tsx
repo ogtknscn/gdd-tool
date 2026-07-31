@@ -1,0 +1,5 @@
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type Edge, type EdgeProps } from '@xyflow/react';
+import { confirmRemoveRelation } from '../commands/relationCommands';
+import type { EdgeKind } from '../domain/types';
+export type GddEdgeData = { kind: EdgeKind; label: string; invalid: boolean };
+export function GddEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, selected, data }: EdgeProps<Edge<GddEdgeData>>) { const [path, labelX, labelY] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }); return <><BaseEdge id={id} path={path} markerEnd={markerEnd} style={{ stroke: data?.invalid ? '#ff7188' : selected ? '#b8aaff' : '#7d89a3', strokeWidth: selected ? 3 : 1.5 }} /><EdgeLabelRenderer><div className={`edge-center-label ${selected ? 'selected' : ''}`} style={{ transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)` }}><span>{data?.label}</span>{selected && <button className="nodrag nopan" onClick={() => void confirmRemoveRelation(id)}>Bağlantıyı sil</button>}</div></EdgeLabelRenderer></>; }

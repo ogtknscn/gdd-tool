@@ -1,61 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, useNodesState, type Connection, type Edge, type Node, type OnConnect, type OnNodeDrag, type OnNodesChange } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { confirmRemoveRelation } from '../commands/relationCommands';
 import { validateProject } from '../domain/validation';
 import { EDGE_LABELS, edgeKinds, type EdgeKind } from '../domain/types';
 import { useProjectStore } from '../stores/projectStore';
 import { useUiStore } from '../stores/uiStore';
+import { GddEdge, type GddEdgeData } from './GddEdge';
 import { GddNodeCard, type GddCardData } from './GddNodeCard';
-
-const colors = { mechanic: '#8b74ff', entity: '#19b8b2', level: '#e59647', quest: '#e86e9b', ui: '#62a0ef', asset: '#83a963' };
-const nodeTypes = { gdd: GddNodeCard };
+const colors = { mechanic: '#8b74ff', entity: '#19b8b2', level: '#e59647', quest: '#e86e9b', ui: '#62a0ef', asset: '#83a963' }; const nodeTypes = { gdd: GddNodeCard }; const edgeTypes = { gdd: GddEdge };
 const ariaLabelConfig = { 'node.a11yDescription.default': 'Bir kart seçmek için Enter veya Boşluk tuşuna basın. Ok tuşlarıyla taşıyın.', 'edge.a11yDescription.default': 'Bir bağlantı seçmek için Enter veya Boşluk tuşuna basın.', 'controls.ariaLabel': 'Tuval kontrolleri', 'controls.zoomIn.ariaLabel': 'Yakınlaştır', 'controls.zoomOut.ariaLabel': 'Uzaklaştır', 'controls.fitView.ariaLabel': 'Tümünü görünür yap', 'controls.interactive.ariaLabel': 'Etkileşimi kilitle', 'minimap.ariaLabel': 'Tuval genel görünümü', 'handle.ariaLabel': 'Bağlantı noktası' };
-
-export const reconcileFlowNodes = (current: Node<GddCardData>[], incoming: Node<GddCardData>[], pointerDraggingId?: string) => {
-  const currentById = new Map(current.map((node) => [node.id, node]));
-  return incoming.map((next) => {
-    const existing = currentById.get(next.id);
-    if (!existing) return next;
-    // Project updates refresh content and selection, but must not overwrite the live pointer position.
-    return { ...existing, ...next, position: next.id === pointerDraggingId ? existing.position : next.position };
-  });
-};
-
+export const reconcileFlowNodes = (current: Node<GddCardData>[], incoming: Node<GddCardData>[], pointerDraggingId?: string) => { const currentById = new Map(current.map((node) => [node.id, node])); return incoming.map((next) => { const existing = currentById.get(next.id); if (!existing) return next; return { ...existing, ...next, position: next.id === pointerDraggingId ? existing.position : next.position }; }); };
 export function Canvas() {
-  const project = useProjectStore((state) => state.project); const selected = useProjectStore((state) => state.selectedNodeId);
-  const select = useProjectStore((state) => state.select); const openDetail = useProjectStore((state) => state.openDetail); const moveNode = useProjectStore((state) => state.moveNode); const addRelation = useProjectStore((state) => state.addRelation); const addNode = useProjectStore((state) => state.addNode);
-  const edgeKind = useUiStore((state) => state.edgeKind); const setEdgeKind = useUiStore((state) => state.setEdgeKind); const sourceId = useUiStore((state) => state.connectionSourceId); const cancelConnection = useUiStore((state) => state.cancelConnection); const densitySetting = useUiStore((state) => state.cardDensity); const zoom = useUiStore((state) => state.canvasZoom); const setZoom = useUiStore((state) => state.setCanvasZoom);
-  const density = densitySetting === 'auto' ? (zoom < .72 ? 'compact' : zoom > 1.22 ? 'detailed' : 'standard') : densitySetting;
-  const pageId = project.activePageId; const issues = useMemo(() => validateProject(project), [project]);
-  const invalidNodes = useMemo(() => new Set(issues.filter((issue) => issue.severity === 'error').map((issue) => issue.nodeId).filter(Boolean)), [issues]);
-  const invalidEdges = useMemo(() => new Set(issues.filter((issue) => issue.severity === 'error').map((issue) => issue.relationId).filter(Boolean)), [issues]);
-  const pageObjects = useMemo(() => project.objects.filter((object) => object.pageId === pageId), [project.objects, pageId]);
-  const projectNodes = useMemo<Node<GddCardData>[]>(() => pageObjects.map((item) => {
-    const place = project.placements.find((entry) => entry.nodeId === item.id && entry.pageId === pageId) ?? { x: 0, y: 0 };
-    return { id: item.id, type: 'gdd', position: { x: place.x, y: place.y }, selected: selected === item.id, data: { item, density, invalid: invalidNodes.has(item.id) }, ariaLabel: `${item.title} ${item.kind}` };
-  }), [pageObjects, project.placements, pageId, selected, density, invalidNodes]);
-  const [nodes, setNodes] = useNodesState<Node<GddCardData>>(projectNodes);
-  const pointerDraggingId = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    setNodes((current) => reconcileFlowNodes(current, projectNodes, pointerDraggingId.current));
-  }, [projectNodes, setNodes]);
-  useEffect(() => { pointerDraggingId.current = undefined; }, [pageId]);
-
-  const edges = useMemo<Edge[]>(() => project.relations.filter((relation) => relation.pageId === pageId).map((relation) => ({ id: relation.id, source: relation.source, target: relation.target, label: EDGE_LABELS[relation.kind], animated: relation.kind === 'requires', ariaLabel: `${EDGE_LABELS[relation.kind]} bağlantısı`, style: { stroke: invalidEdges.has(relation.id) ? '#ff667d' : '#7d89a3', strokeWidth: invalidEdges.has(relation.id) ? 3 : 1.5 }, labelStyle: { fill: '#d1daed', fontSize: 11 }, labelBgStyle: { fill: '#171c2b', stroke: '#46536e', strokeWidth: 1 }, labelBgPadding: [6, 4], labelBgBorderRadius: 4 })), [project.relations, pageId, invalidEdges]);
-  const onNodesChange: OnNodesChange<Node<GddCardData>> = useCallback((changes) => {
-    setNodes((current) => applyNodeChanges(changes, current));
-    changes.forEach((change) => {
-      if (change.type === 'position' && change.position && change.dragging === false && pointerDraggingId.current !== change.id) moveNode(change.id, change.position.x, change.position.y);
-    });
-  }, [moveNode, setNodes]);
-  const onNodeDragStart: OnNodeDrag<Node<GddCardData>> = useCallback((_, node) => { pointerDraggingId.current = node.id; }, []);
-  const onNodeDragStop: OnNodeDrag<Node<GddCardData>> = useCallback((_, node) => {
-    // The pointer drag produces many local React Flow updates, but exactly one persisted move.
-    pointerDraggingId.current = undefined;
-    moveNode(node.id, node.position.x, node.position.y);
-  }, [moveNode]);
-  const onConnect: OnConnect = useCallback((connection: Connection) => { if (connection.source && connection.target) addRelation(connection.source, connection.target, edgeKind); }, [addRelation, edgeKind]);
-
-  return <main className={`canvas density-${density}`}><div className="canvas-toolbar"><label>Bağlantı<select value={edgeKind} onChange={(event) => setEdgeKind(event.target.value as EdgeKind)}>{edgeKinds.map((kind) => <option key={kind} value={kind}>{EDGE_LABELS[kind]}</option>)}</select></label>{sourceId && <button onClick={cancelConnection}>Bağlamayı iptal et</button>}</div>{!pageObjects.length && <div className="canvas-empty"><h2>Bu sayfa henüz boş</h2><p>Bir GDD öğesi ekleyin veya hazır bir akış yerleştirin.</p><button onClick={() => addNode('mechanic')}>İlk öğeyi ekle</button></div>}<ReactFlow key={pageId} nodeTypes={nodeTypes} nodes={nodes} edges={edges} onNodesChange={onNodesChange} onNodeDragStart={onNodeDragStart} onNodeDragStop={onNodeDragStop} onConnect={onConnect} onNodeClick={(_, node) => { if (sourceId && sourceId !== node.id) { addRelation(sourceId, node.id, edgeKind); cancelConnection(); select(node.id); } else select(node.id); }} onNodeDoubleClick={(_, node) => openDetail(node.id)} onPaneClick={() => { select(); cancelConnection(); }} onMoveEnd={(_, viewport) => setZoom(viewport.zoom)} ariaLabelConfig={ariaLabelConfig} fitView onlyRenderVisibleElements><Background gap={20} size={1} color="#303950" /><Controls /><MiniMap ariaLabel="Tuval genel görünümü" bgColor="#151b29" maskColor="rgba(5, 8, 16, .72)" nodeStrokeColor="#b9c5df" nodeStrokeWidth={2} nodeColor={(node) => colors[project.objects.find((object) => object.id === node.id)?.kind ?? 'mechanic']} pannable zoomable /></ReactFlow></main>;
+  const project = useProjectStore((state) => state.project); const selected = useProjectStore((state) => state.selectedNodeId); const select = useProjectStore((state) => state.select); const openDetail = useProjectStore((state) => state.openDetail); const moveNode = useProjectStore((state) => state.moveNode); const addRelation = useProjectStore((state) => state.addRelation); const addNode = useProjectStore((state) => state.addNode);
+  const edgeKind = useUiStore((state) => state.edgeKind); const setEdgeKind = useUiStore((state) => state.setEdgeKind); const sourceId = useUiStore((state) => state.connectionSourceId); const cancelConnection = useUiStore((state) => state.cancelConnection); const selectedRelationId = useUiStore((state) => state.selectedRelationId); const setSelectedRelation = useUiStore((state) => state.setSelectedRelation); const densitySetting = useUiStore((state) => state.cardDensity); const zoom = useUiStore((state) => state.canvasZoom); const setZoom = useUiStore((state) => state.setCanvasZoom);
+  const density = densitySetting === 'auto' ? (zoom < .72 ? 'compact' : zoom > 1.22 ? 'detailed' : 'standard') : densitySetting; const pageId = project.activePageId; const issues = useMemo(() => validateProject(project), [project]); const invalidNodes = useMemo(() => new Set(issues.filter((issue) => issue.severity === 'error').map((issue) => issue.nodeId).filter(Boolean)), [issues]); const invalidEdges = useMemo(() => new Set(issues.filter((issue) => issue.severity === 'error').map((issue) => issue.relationId).filter(Boolean)), [issues]); const pageObjects = useMemo(() => project.objects.filter((object) => object.pageId === pageId), [project.objects, pageId]);
+  const projectNodes = useMemo<Node<GddCardData>[]>(() => pageObjects.map((item) => { const place = project.placements.find((entry) => entry.nodeId === item.id && entry.pageId === pageId) ?? { x: 0, y: 0 }; return { id: item.id, type: 'gdd', position: { x: place.x, y: place.y }, selected: selected === item.id, data: { item, density, invalid: invalidNodes.has(item.id) }, ariaLabel: `${item.title} ${item.kind}` }; }), [pageObjects, project.placements, pageId, selected, density, invalidNodes]);
+  const [nodes, setNodes] = useNodesState<Node<GddCardData>>(projectNodes); const pointerDraggingId = useRef<string | undefined>(undefined); useEffect(() => setNodes((current) => reconcileFlowNodes(current, projectNodes, pointerDraggingId.current)), [projectNodes, setNodes]); useEffect(() => { pointerDraggingId.current = undefined; setSelectedRelation(); }, [pageId, setSelectedRelation]);
+  const edges = useMemo<Edge<GddEdgeData>[]>(() => project.relations.filter((relation) => relation.pageId === pageId).map((relation) => ({ id: relation.id, type: 'gdd', source: relation.source, target: relation.target, selected: selectedRelationId === relation.id, animated: relation.kind === 'requires', ariaLabel: `${EDGE_LABELS[relation.kind]} bağlantısı`, data: { kind: relation.kind, label: EDGE_LABELS[relation.kind], invalid: invalidEdges.has(relation.id) } })), [project.relations, pageId, invalidEdges, selectedRelationId]);
+  const onNodesChange: OnNodesChange<Node<GddCardData>> = useCallback((changes) => { setNodes((current) => applyNodeChanges(changes, current)); changes.forEach((change) => { if (change.type === 'position' && change.position && change.dragging === false && pointerDraggingId.current !== change.id) moveNode(change.id, change.position.x, change.position.y); }); }, [moveNode, setNodes]); const onNodeDragStart: OnNodeDrag<Node<GddCardData>> = useCallback((_, node) => { pointerDraggingId.current = node.id; }, []); const onNodeDragStop: OnNodeDrag<Node<GddCardData>> = useCallback((_, node) => { pointerDraggingId.current = undefined; moveNode(node.id, node.position.x, node.position.y); }, [moveNode]); const onConnect: OnConnect = useCallback((connection: Connection) => { if (connection.source && connection.target) addRelation(connection.source, connection.target, edgeKind); }, [addRelation, edgeKind]);
+  useEffect(() => { const remove = (event: KeyboardEvent) => { if (!selectedRelationId || !['Delete', 'Backspace'].includes(event.key)) return; const target = event.target as HTMLElement | null; if (target?.matches('input, textarea, select, [contenteditable="true"]')) return; event.preventDefault(); void confirmRemoveRelation(selectedRelationId); }; window.addEventListener('keydown', remove); return () => window.removeEventListener('keydown', remove); }, [selectedRelationId]);
+  return <main className={`canvas density-${density}`}><div className="canvas-toolbar"><label>Bağlantı<select value={edgeKind} onChange={(event) => setEdgeKind(event.target.value as EdgeKind)}>{edgeKinds.map((kind) => <option key={kind} value={kind}>{EDGE_LABELS[kind]}</option>)}</select></label>{sourceId && <button onClick={cancelConnection}>Bağlamayı iptal et</button>}</div>{!pageObjects.length && <div className="canvas-empty"><h2>Bu sayfa henüz boş</h2><p>Bir GDD öğesi ekleyin veya hazır bir akış yerleştirin.</p><button onClick={() => addNode('mechanic')}>İlk öğeyi ekle</button></div>}<ReactFlow key={pageId} nodeTypes={nodeTypes} edgeTypes={edgeTypes} nodes={nodes} edges={edges} deleteKeyCode={null} onNodesChange={onNodesChange} onNodeDragStart={onNodeDragStart} onNodeDragStop={onNodeDragStop} onConnect={onConnect} onNodeClick={(_, node) => { setSelectedRelation(); if (sourceId && sourceId !== node.id) { addRelation(sourceId, node.id, edgeKind); cancelConnection(); } select(node.id); }} onEdgeClick={(_, edge) => { select(); setSelectedRelation(edge.id); }} onNodeDoubleClick={(_, node) => openDetail(node.id)} onPaneClick={() => { select(); setSelectedRelation(); cancelConnection(); }} onMoveEnd={(_, viewport) => setZoom(viewport.zoom)} ariaLabelConfig={ariaLabelConfig} fitView onlyRenderVisibleElements><Background gap={20} size={1} color="#303950" /><Controls /><MiniMap ariaLabel="Tuval genel görünümü" bgColor="#151b29" maskColor="rgba(5, 8, 16, .72)" nodeStrokeColor="#b9c5df" nodeStrokeWidth={2} nodeColor={(node) => colors[project.objects.find((object) => object.id === node.id)?.kind ?? 'mechanic']} pannable zoomable /></ReactFlow></main>;
 }
