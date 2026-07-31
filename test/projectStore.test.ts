@@ -56,6 +56,12 @@ describe('project store', () => {
     expect(useProjectStore.getState().project.groups).toHaveLength(0);
     expect(useProjectStore.getState().project.objects).toHaveLength(2); expect(useProjectStore.getState().project.relations).toHaveLength(1);
   });
+  it('moves every member of a group in one undoable operation', () => {
+    const store = useProjectStore.getState(); store.addNode('mechanic'); store.addNode('entity'); const [first, second] = useProjectStore.getState().project.objects;
+    store.createGroup('Sistem', '#7058dd', [first.id, second.id]); const group = useProjectStore.getState().project.groups[0]; const before = useProjectStore.getState().project.placements.map((place) => ({ ...place })); const undoBefore = useProjectStore.getState().undoStack.length;
+    store.moveGroup(group.id, { x: 80, y: -40 }); const after = useProjectStore.getState().project.placements;
+    expect(after.map((place, index) => ({ x: place.x - before[index].x, y: place.y - before[index].y }))).toEqual([{ x: 80, y: -40 }, { x: 80, y: -40 }]); expect(useProjectStore.getState().undoStack).toHaveLength(undoBefore + 1);
+  });
   it('updates checklist items atomically and assigns fresh ids when duplicating', () => {
     const store = useProjectStore.getState(); store.addNode('mechanic'); const node = useProjectStore.getState().project.objects[0]; const undoBefore = useProjectStore.getState().undoStack.length;
     store.addChecklistItem(node.id, 'Kapıyı test et'); const item = useProjectStore.getState().project.objects[0].checklist[0]; store.toggleChecklistItem(node.id, item.id); store.updateChecklistItem(node.id, item.id, 'Kapıyı yeniden test et');

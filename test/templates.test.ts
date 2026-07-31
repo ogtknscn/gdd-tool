@@ -4,7 +4,7 @@ import { ProjectSchema } from '../src/domain/types';
 
 describe('starter templates', () => {
   it('offers blank, flow and puzzle templates with useful welcome metadata', () => {
-    expect(templates.map((item) => item.id)).toEqual(['blank', 'core-loop', 'quest', 'puzzle-level', 'puzzle-tutorial']);
+    expect(templates.map((item) => item.id)).toEqual(['blank', 'core-loop', 'quest', 'puzzle-level', 'puzzle-tutorial', 'combat-encounter', 'economy-progression', 'branching-narrative', 'ui-flow', 'roguelite-run-loop']);
     expect(templates.every((item) => item.category && item.useCase && item.startingCounts && item.preview)).toBe(true);
   });
   it('creates valid projects with separated objects and placements', () => {
@@ -21,5 +21,8 @@ describe('starter templates', () => {
     expect(first.objects).toHaveLength(9); expect(tutorial.objects).toHaveLength(7);
     expect(first.id).not.toBe(second.id); expect(first.activePageId).not.toBe(second.activePageId);
     expect(ProjectSchema.parse(tutorial)).toEqual(tutorial);
+  });
+  it('ships the five specialised templates with editable groups, checklist and labels', () => {
+    (['combat-encounter', 'economy-progression', 'branching-narrative', 'ui-flow', 'roguelite-run-loop'] as const).forEach((id) => { const project = findTemplate(id).create(); expect(ProjectSchema.parse(project)).toEqual(project); expect(project.groups.length).toBeGreaterThan(0); expect(project.groups.every((group) => !group.collapsed)).toBe(true); expect(project.objects[0].checklist.length).toBeGreaterThan(0); expect(project.relations[0].customLabel).not.toBe(''); });
   });
 });

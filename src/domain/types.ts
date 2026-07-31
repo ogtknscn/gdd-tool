@@ -23,10 +23,10 @@ export type Placement = z.infer<typeof PlacementSchema>;
 export const MAX_EDGE_LABEL_LENGTH = 120;
 export const GddEdgeSchema = z.object({ id: z.string().min(1), pageId: z.string(), source: z.string(), target: z.string(), kind: z.enum(edgeKinds), customLabel: z.string().max(MAX_EDGE_LABEL_LENGTH) });
 export type GddEdge = z.infer<typeof GddEdgeSchema>;
-export const GddGroupSchema = z.object({ id: z.string().min(1), pageId: z.string().min(1), title: z.string(), color: z.string().min(1), memberNodeIds: z.array(z.string()), parentGroupId: z.string().min(1).optional() });
+export const GddGroupSchema = z.object({ id: z.string().min(1), pageId: z.string().min(1), title: z.string(), color: z.string().min(1), memberNodeIds: z.array(z.string()), parentGroupId: z.string().min(1).optional(), collapsed: z.boolean().default(false) });
 export type GddGroup = z.infer<typeof GddGroupSchema>;
 export const ProjectSchema = z.object({
-  schemaVersion: z.literal(5), id: z.string(), title: z.string(), updatedAt: z.string(),
+  schemaVersion: z.literal(6), id: z.string(), title: z.string(), updatedAt: z.string(),
   pages: z.array(GddPageSchema).min(1), activePageId: z.string().min(1),
   objects: z.array(GddNodeSchema), placements: z.array(PlacementSchema), relations: z.array(GddEdgeSchema), groups: z.array(GddGroupSchema),
 });

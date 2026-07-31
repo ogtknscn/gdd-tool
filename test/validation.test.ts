@@ -25,7 +25,7 @@ describe('validation engine', () => {
     const project = emptyProject(); const pageId = project.activePageId;
     const details = { status: 'draft' as const, tags: [], designIntent: '', playerExperience: '', specification: '', testNotes: '', properties: {}, checklist: [] };
     project.objects = [{ id: 'a', pageId, kind: 'mechanic', title: 'A', summary: '', ...details }];
-    project.groups = [{ id: 'g1', pageId, title: '', color: '#7058dd', memberNodeIds: ['a', 'a', 'missing'], parentGroupId: 'g2' }, { id: 'g2', pageId, title: 'Parent', color: '#19b8b2', memberNodeIds: [], parentGroupId: 'g1' }];
+    project.groups = [{ id: 'g1', pageId, title: '', color: '#7058dd', memberNodeIds: ['a', 'a', 'missing'], parentGroupId: 'g2', collapsed: false }, { id: 'g2', pageId, title: 'Parent', color: '#19b8b2', memberNodeIds: [], parentGroupId: 'g1', collapsed: false }];
     const codes = validateProject(project).map((issue) => issue.code);
     expect(codes).toEqual(expect.arrayContaining(['blank-group-title', 'duplicate-group-member', 'invalid-group-member', 'group-parent-cycle']));
   });
