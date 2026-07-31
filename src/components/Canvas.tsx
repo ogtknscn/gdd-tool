@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { Background, Controls, MiniMap, ReactFlow, type Connection, type Edge, type Node, type NodeChange, type OnConnect } from '@xyflow/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Background, Controls, MiniMap, ReactFlow, type Connection, type Edge, type Node, type NodeChange, type OnConnect, type OnNodeDrag } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { validateProject } from '../domain/validation';
 import { EDGE_LABELS, edgeKinds, type EdgeKind } from '../domain/types';
@@ -16,11 +16,30 @@ export function Canvas() {
   const edgeKind = useUiStore((state) => state.edgeKind); const setEdgeKind = useUiStore((state) => state.setEdgeKind); const sourceId = useUiStore((state) => state.connectionSourceId); const cancelConnection = useUiStore((state) => state.cancelConnection); const densitySetting = useUiStore((state) => state.cardDensity); const zoom = useUiStore((state) => state.canvasZoom); const setZoom = useUiStore((state) => state.setCanvasZoom);
   const density = densitySetting === 'auto' ? (zoom < .72 ? 'compact' : zoom > 1.22 ? 'detailed' : 'standard') : densitySetting;
   const pageId = project.activePageId; const issues = useMemo(() => validateProject(project), [project]);
+  const [dragPreviewPositions, setDragPreviewPositions] = useState<Record<string, { x: number; y: number }>>({});
+  const pointerDraggingIds = useRef(new Set<string>());
+  useEffect(() => { setDragPreviewPositions({}); pointerDraggingIds.current.clear(); }, [pageId]);
   const invalidNodes = new Set(issues.filter((issue) => issue.severity === 'error').map((issue) => issue.nodeId).filter(Boolean)); const invalidEdges = new Set(issues.filter((issue) => issue.severity === 'error').map((issue) => issue.relationId).filter(Boolean));
   const pageObjects = project.objects.filter((object) => object.pageId === pageId);
-  const nodes = useMemo<Node<GddCardData>[]>(() => pageObjects.map((item) => { const place = project.placements.find((entry) => entry.nodeId === item.id && entry.pageId === pageId) ?? { x: 0, y: 0 }; return { id: item.id, type: 'gdd', position: { x: place.x, y: place.y }, selected: selected === item.id, data: { item, density, invalid: invalidNodes.has(item.id) }, ariaLabel: `${item.title} ${item.kind}` }; }), [pageObjects, project.placements, pageId, selected, density, invalidNodes]);
+  const nodes = useMemo<Node<GddCardData>[]>(() => pageObjects.map((item) => { const storedPlace = project.placements.find((entry) => entry.nodeId === item.id && entry.pageId === pageId) ?? { x: 0, y: 0 }; const place = dragPreviewPositions[item.id] ?? storedPlace; return { id: item.id, type: 'gdd', position: { x: place.x, y: place.y }, selected: selected === item.id, data: { item, density, invalid: invalidNodes.has(item.id) }, ariaLabel: `${item.title} ${item.kind}` }; }), [pageObjects, project.placements, pageId, selected, density, invalidNodes, dragPreviewPositions]);
   const edges = useMemo<Edge[]>(() => project.relations.filter((relation) => relation.pageId === pageId).map((relation) => ({ id: relation.id, source: relation.source, target: relation.target, label: EDGE_LABELS[relation.kind], animated: relation.kind === 'requires', ariaLabel: `${EDGE_LABELS[relation.kind]} bağlantısı`, style: { stroke: invalidEdges.has(relation.id) ? '#ff667d' : '#7d89a3', strokeWidth: invalidEdges.has(relation.id) ? 3 : 1.5 }, labelStyle: { fill: '#d1daed', fontSize: 11 }, labelBgStyle: { fill: '#171c2b', stroke: '#46536e', strokeWidth: 1 }, labelBgPadding: [6, 4], labelBgBorderRadius: 4 })), [project.relations, pageId, invalidEdges]);
-  const onNodesChange = useCallback((changes: NodeChange[]) => changes.forEach((change) => { if (change.type === 'position' && change.position && change.dragging === false) moveNode(change.id, change.position.x, change.position.y); }), [moveNode]);
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    // Pointer drags commit on drag-stop; keyboard moves still commit here.
+    changes.forEach((change) => {
+      if (change.type === 'position' && change.position && change.dragging === false && !pointerDraggingIds.current.has(change.id)) moveNode(change.id, change.position.x, change.position.y);
+    });
+  }, [moveNode]);
+  const onNodeDragStart: OnNodeDrag<Node<GddCardData>> = useCallback((_, node) => {
+    pointerDraggingIds.current.add(node.id);
+  }, []);
+  const onNodeDrag: OnNodeDrag<Node<GddCardData>> = useCallback((_, node) => {
+    setDragPreviewPositions((positions) => ({ ...positions, [node.id]: { x: node.position.x, y: node.position.y } }));
+  }, []);
+  const onNodeDragStop: OnNodeDrag<Node<GddCardData>> = useCallback((_, node) => {
+    pointerDraggingIds.current.delete(node.id);
+    setDragPreviewPositions((positions) => { const { [node.id]: _preview, ...remaining } = positions; return remaining; });
+    moveNode(node.id, node.position.x, node.position.y);
+  }, [moveNode]);
   const onConnect: OnConnect = useCallback((connection: Connection) => { if (connection.source && connection.target) addRelation(connection.source, connection.target, edgeKind); }, [addRelation, edgeKind]);
-  return <main className={`canvas density-${density}`}><div className="canvas-toolbar"><label>Bağlantı<select value={edgeKind} onChange={(event) => setEdgeKind(event.target.value as EdgeKind)}>{edgeKinds.map((kind) => <option key={kind} value={kind}>{EDGE_LABELS[kind]}</option>)}</select></label>{sourceId && <button onClick={cancelConnection}>Bağlamayı iptal et</button>}</div>{!pageObjects.length && <div className="canvas-empty"><h2>Bu sayfa henüz boş</h2><p>Bir GDD öğesi ekleyin veya hazır bir akış yerleştirin.</p><button onClick={() => addNode('mechanic')}>İlk öğeyi ekle</button></div>}<ReactFlow key={pageId} nodeTypes={nodeTypes} nodes={nodes} edges={edges} onNodesChange={onNodesChange} onConnect={onConnect} onNodeClick={(_, node) => { if (sourceId && sourceId !== node.id) { addRelation(sourceId, node.id, edgeKind); cancelConnection(); select(node.id); } else select(node.id); }} onNodeDoubleClick={(_, node) => openDetail(node.id)} onPaneClick={() => { select(); cancelConnection(); }} onMoveEnd={(_, viewport) => setZoom(viewport.zoom)} ariaLabelConfig={ariaLabelConfig} fitView onlyRenderVisibleElements><Background gap={20} size={1} color="#303950" /><Controls /><MiniMap ariaLabel="Tuval genel görünümü" bgColor="#151b29" maskColor="rgba(5, 8, 16, .72)" nodeStrokeColor="#b9c5df" nodeStrokeWidth={2} nodeColor={(node) => colors[project.objects.find((object) => object.id === node.id)?.kind ?? 'mechanic']} pannable zoomable /></ReactFlow></main>;
+  return <main className={`canvas density-${density}`}><div className="canvas-toolbar"><label>Bağlantı<select value={edgeKind} onChange={(event) => setEdgeKind(event.target.value as EdgeKind)}>{edgeKinds.map((kind) => <option key={kind} value={kind}>{EDGE_LABELS[kind]}</option>)}</select></label>{sourceId && <button onClick={cancelConnection}>Bağlamayı iptal et</button>}</div>{!pageObjects.length && <div className="canvas-empty"><h2>Bu sayfa henüz boş</h2><p>Bir GDD öğesi ekleyin veya hazır bir akış yerleştirin.</p><button onClick={() => addNode('mechanic')}>İlk öğeyi ekle</button></div>}<ReactFlow key={pageId} nodeTypes={nodeTypes} nodes={nodes} edges={edges} onNodesChange={onNodesChange} onNodeDragStart={onNodeDragStart} onNodeDrag={onNodeDrag} onNodeDragStop={onNodeDragStop} onConnect={onConnect} onNodeClick={(_, node) => { if (sourceId && sourceId !== node.id) { addRelation(sourceId, node.id, edgeKind); cancelConnection(); select(node.id); } else select(node.id); }} onNodeDoubleClick={(_, node) => openDetail(node.id)} onPaneClick={() => { select(); cancelConnection(); }} onMoveEnd={(_, viewport) => setZoom(viewport.zoom)} ariaLabelConfig={ariaLabelConfig} fitView onlyRenderVisibleElements><Background gap={20} size={1} color="#303950" /><Controls /><MiniMap ariaLabel="Tuval genel görünümü" bgColor="#151b29" maskColor="rgba(5, 8, 16, .72)" nodeStrokeColor="#b9c5df" nodeStrokeWidth={2} nodeColor={(node) => colors[project.objects.find((object) => object.id === node.id)?.kind ?? 'mechanic']} pannable zoomable /></ReactFlow></main>;
 }

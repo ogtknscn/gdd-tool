@@ -59,4 +59,19 @@ describe('project store', () => {
     expect(useProjectStore.getState().project.placements.some((place) => place.nodeId === source.id)).toBe(false);
     expect(useProjectStore.getState().project.relations).toHaveLength(0);
   });
+  it('clears a deleted node from selection and detail, and undo restores all linked data', () => {
+    const store = useProjectStore.getState(); store.addNode('mechanic'); store.addNode('ui');
+    const [source, target] = useProjectStore.getState().project.objects;
+    store.addRelation(source.id, target.id, 'affects'); store.openDetail(source.id);
+    const beforeRemoval = structuredClone(useProjectStore.getState().project);
+
+    store.removeNode(source.id);
+    expect(useProjectStore.getState()).toMatchObject({ selectedNodeId: undefined, detailNodeId: undefined });
+    expect(useProjectStore.getState().project.objects.map((node) => node.id)).toEqual([target.id]);
+    expect(useProjectStore.getState().project.placements.some((placement) => placement.nodeId === source.id)).toBe(false);
+    expect(useProjectStore.getState().project.relations).toHaveLength(0);
+
+    useProjectStore.getState().undo();
+    expect(useProjectStore.getState().project).toEqual(beforeRemoval);
+  });
 });
