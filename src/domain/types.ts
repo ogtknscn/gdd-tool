@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Language } from './i18n';
 
 export const nodeKinds = ['mechanic', 'entity', 'level', 'quest', 'ui', 'asset', 'narrative', 'system', 'goal', 'risk'] as const;
 export type NodeKind = (typeof nodeKinds)[number];
@@ -73,8 +74,12 @@ export type GddGroup = z.infer<typeof GddGroupSchema>;
 export const PlaygroundItemSchema = z.object({
   id: z.string().min(1),
   pageId: z.string().min(1),
-  type: z.enum(['sticky', 'text', 'comment']),
+  type: z.enum(['sticky', 'text', 'comment', 'image']),
   text: z.string(),
+  // Only set for type 'image': a data: URL (the image embedded inline, see
+  // domain/image.ts for why - keeps the project a single portable file
+  // instead of a project-plus-asset-folder pair).
+  imageData: z.string().optional(),
   x: z.number(),
   y: z.number(),
 });
@@ -95,31 +100,20 @@ export const ProjectSchema = z.object({
 });
 export type ProjectModel = z.infer<typeof ProjectSchema>;
 
-export const NODE_LABELS: Record<NodeKind, string> = {
-  mechanic: 'Mekanik',
-  entity: 'Varlık',
-  level: 'Bölüm',
-  quest: 'Görev',
-  ui: 'Arayüz',
-  asset: 'Asset',
-  narrative: 'Anlatı',
-  system: 'Sistem',
-  goal: 'Hedef',
-  risk: 'Risk',
+const NODE_LABELS_BY_LANGUAGE: Record<Language, Record<NodeKind, string>> = {
+  tr: { mechanic: 'Mekanik', entity: 'Varlık', level: 'Bölüm', quest: 'Görev', ui: 'Arayüz', asset: 'Asset', narrative: 'Anlatı', system: 'Sistem', goal: 'Hedef', risk: 'Risk' },
+  en: { mechanic: 'Mechanic', entity: 'Entity', level: 'Level', quest: 'Quest', ui: 'UI', asset: 'Asset', narrative: 'Narrative', system: 'System', goal: 'Goal', risk: 'Risk' },
 };
+export const nodeLabel = (kind: NodeKind, language: Language): string => NODE_LABELS_BY_LANGUAGE[language][kind];
 
-export const EDGE_LABELS: Record<EdgeKind, string> = {
-  requires: 'Gerektirir',
-  affects: 'Etkiler',
-  produces: 'Üretir',
-  tested_by: 'Test edilir',
-  conflicts_with: 'Çakışır',
-  teaches: 'Öğretir',
+const EDGE_LABELS_BY_LANGUAGE: Record<Language, Record<EdgeKind, string>> = {
+  tr: { requires: 'Gerektirir', affects: 'Etkiler', produces: 'Üretir', tested_by: 'Test edilir', conflicts_with: 'Çakışır', teaches: 'Öğretir' },
+  en: { requires: 'Requires', affects: 'Affects', produces: 'Produces', tested_by: 'Tested by', conflicts_with: 'Conflicts with', teaches: 'Teaches' },
 };
+export const edgeLabel = (kind: EdgeKind, language: Language): string => EDGE_LABELS_BY_LANGUAGE[language][kind];
 
-export const STATUS_LABELS: Record<NodeStatus, string> = {
-  draft: 'Taslak',
-  in_progress: 'Üzerinde çalışılıyor',
-  validated: 'Doğrulandı',
-  archived: 'Arşivlendi',
+const STATUS_LABELS_BY_LANGUAGE: Record<Language, Record<NodeStatus, string>> = {
+  tr: { draft: 'Taslak', in_progress: 'Üzerinde çalışılıyor', validated: 'Doğrulandı', archived: 'Arşivlendi' },
+  en: { draft: 'Draft', in_progress: 'In progress', validated: 'Validated', archived: 'Archived' },
 };
+export const statusLabel = (status: NodeStatus, language: Language): string => STATUS_LABELS_BY_LANGUAGE[language][status];

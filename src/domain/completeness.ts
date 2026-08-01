@@ -1,4 +1,4 @@
-import { TYPE_FIELDS } from './nodeFields';
+import { typeFields } from './nodeFields';
 import type { GddNode, ProjectModel } from './types';
 
 const LONG_FIELD_KEYS: Array<keyof Pick<GddNode, 'designIntent' | 'playerExperience' | 'specification' | 'testNotes'>> =
@@ -12,7 +12,9 @@ export function nodeCompleteness(node: GddNode): number {
   const checks = [
     Boolean(node.summary.trim()),
     ...LONG_FIELD_KEYS.map((key) => Boolean(node[key].trim())),
-    ...TYPE_FIELDS[node.kind].map((field) => Boolean(node.properties[field.key]?.trim())),
+    // Field *keys* (not labels) are identical across languages by design -
+    // see nodeFields.ts - so which language we ask for here doesn't matter.
+    ...typeFields(node.kind, 'tr').map((field) => Boolean(node.properties[field.key]?.trim())),
     node.status === 'validated',
     node.checklist.length === 0 || node.checklist.every((item) => item.done),
   ];

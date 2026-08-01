@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { projectMarkdown } from '../domain/export';
 import { useProjectStore } from '../stores/projectStore';
-import { useUiStore } from '../stores/uiStore';
+import { useT, useUiStore } from '../stores/uiStore';
 
 // Renders the same Markdown the "Markdown indir" export produces, live, so a
 // designer can see the GDD taking shape without exporting a file each time.
@@ -10,6 +10,7 @@ import { useUiStore } from '../stores/uiStore';
 // re-implementing that layout here would just be a second thing to keep in
 // sync.
 export function MarkdownPreviewPanel() {
+  const t = useT();
   const open = useUiStore((state) => state.markdownPreviewOpen);
   const toggle = useUiStore((state) => state.toggleMarkdownPreview);
   const project = useProjectStore((state) => state.project);
@@ -17,8 +18,8 @@ export function MarkdownPreviewPanel() {
   if (!open) return null;
   return <div className="validation-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) toggle(); }}>
     <aside className="validation-panel markdown-preview" role="dialog" aria-modal="true" aria-labelledby="markdown-preview-title">
-      <div className="validation-title"><h2 id="markdown-preview-title">Markdown önizleme</h2><button aria-label="Markdown önizlemeyi kapat" onClick={toggle}>×</button></div>
-      <p>Bu, "Markdown indir" ile dışa aktarılacak içeriğin canlı önizlemesidir.</p>
+      <div className="validation-title"><h2 id="markdown-preview-title">{t('markdownPreview.title')}</h2><button aria-label={t('markdownPreview.close')} onClick={toggle}>×</button></div>
+      <p>{t('markdownPreview.hint')}</p>
       <pre className="markdown-preview-body">{markdown}</pre>
     </aside>
   </div>;

@@ -1,5 +1,6 @@
 import { parseAndMigrateProject } from './project';
 import { ProjectSchema, type ProjectModel } from './types';
+import { useUiStore } from '../stores/uiStore';
 
 const recoveryKey = 'gdd-tool:project-snapshot';
 const recentKey = 'gdd-tool:recent-projects';
@@ -46,7 +47,7 @@ export async function loadRecoverySnapshot(): Promise<ProjectModel | null> {
   }
   if (!value) return null;
   const envelope = value as Partial<RecoveryEnvelope>;
-  return parseAndMigrateProject(envelope.kind === 'gdd-recovery' ? envelope.project : value);
+  return parseAndMigrateProject(envelope.kind === 'gdd-recovery' ? envelope.project : value, useUiStore.getState().language);
 }
 
 const remember = async (recent: RecentProject) => {
@@ -73,7 +74,7 @@ export async function openProjectFile(): Promise<OpenedProject | null> {
   const { invoke } = await import('@tauri-apps/api/core');
   const result = await invoke<{ snapshot: unknown; path: string } | null>('open_project_file');
   if (!result) return null;
-  const project = parseAndMigrateProject(result.snapshot);
+  const project = parseAndMigrateProject(result.snapshot, useUiStore.getState().language);
   await remember({ path: result.path, title: project.title, openedAt: new Date().toISOString() });
   return { project, path: result.path };
 }
@@ -83,7 +84,7 @@ export async function openRecentProject(path: string): Promise<OpenedProject | n
   const { invoke } = await import('@tauri-apps/api/core');
   const result = await invoke<{ snapshot: unknown; path: string } | null>('open_recent_project', { path });
   if (!result) return null;
-  const project = parseAndMigrateProject(result.snapshot);
+  const project = parseAndMigrateProject(result.snapshot, useUiStore.getState().language);
   await remember({ path: result.path, title: project.title, openedAt: new Date().toISOString() });
   return { project, path: result.path };
 }

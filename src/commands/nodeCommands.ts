@@ -1,3 +1,4 @@
+import { t } from '../domain/i18n';
 import { feedback, useFeedbackStore } from '../stores/feedbackStore';
 import { useProjectStore } from '../stores/projectStore';
 import { useUiStore } from '../stores/uiStore';
@@ -13,12 +14,13 @@ export async function confirmRemoveNode(id: string): Promise<boolean> {
   const state = useProjectStore.getState();
   const node = state.project.objects.find((item) => item.id === id);
   if (!node) return false;
+  const language = useUiStore.getState().language;
   const relationCount = state.project.relations.filter((relation) => relation.source === id || relation.target === id).length;
   const accepted = await feedback.confirm({
-    title: `“${node.title}” silinsin mi?`,
-    message: relationCount ? `${relationCount} bağlı ilişki de silinecek. İşlemi geri alabilirsiniz.` : 'Bu kartın bağlı ilişkisi yok. İşlemi geri alabilirsiniz.',
+    title: t(language, 'nodeCommands.confirmDeleteTitle', { title: node.title }),
+    message: relationCount ? t(language, 'nodeCommands.confirmDeleteBodyWithRelations', { count: relationCount }) : t(language, 'nodeCommands.confirmDeleteBodyNoRelations'),
     tone: 'danger',
-    confirmLabel: 'Kartı sil',
+    confirmLabel: t(language, 'nodeCommands.confirmDeleteConfirmLabel'),
   });
   if (!accepted) return false;
   useProjectStore.getState().removeNode(id);

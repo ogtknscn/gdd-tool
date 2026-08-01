@@ -1,4 +1,5 @@
-import { NODE_LABELS, type GddNode, type ProjectModel } from './types';
+import type { Language } from './i18n';
+import { nodeLabel, type GddNode, type ProjectModel } from './types';
 
 const safeName = (title: string) => title.trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'gdd-project';
 
@@ -53,7 +54,7 @@ function pageMarkdown(project: ProjectModel, page: ProjectModel['pages'][number]
 export const projectMarkdown = (project: ProjectModel) =>
   `# ${project.title}\n\n${project.pages.map((page) => pageMarkdown(project, page)).join('\n')}`;
 
-export const projectSvg = (project: ProjectModel) => {
+export const projectSvg = (project: ProjectModel, language: Language) => {
   const page = project.pages.find((item) => item.id === project.activePageId)!;
   const nodes = project.objects.filter((node) => node.pageId === page.id);
   const position = (id: string) => project.placements.find((item) => item.nodeId === id && item.pageId === page.id) ?? { x: 0, y: 0 };
@@ -77,7 +78,7 @@ export const projectSvg = (project: ProjectModel) => {
   const nodeShapes = nodes
     .map((node) => {
       const point = position(node.id);
-      return `<g><rect x="${point.x}" y="${point.y}" width="210" height="110" rx="10" fill="#20293a" stroke="#8b74ff"/><text x="${point.x + 14}" y="${point.y + 34}" fill="#fff" font-family="Arial" font-size="15">${esc(node.title)}</text><text x="${point.x + 14}" y="${point.y + 60}" fill="#b9c5df" font-family="Arial" font-size="11">${esc(NODE_LABELS[node.kind])}</text></g>`;
+      return `<g><rect x="${point.x}" y="${point.y}" width="210" height="110" rx="10" fill="#20293a" stroke="#8b74ff"/><text x="${point.x + 14}" y="${point.y + 34}" fill="#fff" font-family="Arial" font-size="15">${esc(node.title)}</text><text x="${point.x + 14}" y="${point.y + 60}" fill="#b9c5df" font-family="Arial" font-size="11">${esc(nodeLabel(node.kind, language))}</text></g>`;
     })
     .join('');
 
@@ -87,11 +88,11 @@ export const projectSvg = (project: ProjectModel) => {
 export const downloadMarkdown = (project: ProjectModel) =>
   download(projectMarkdown(project), 'text/markdown;charset=utf-8', `${safeName(project.title)}.md`);
 
-export const downloadSvg = (project: ProjectModel) =>
-  download(projectSvg(project), 'image/svg+xml;charset=utf-8', `${safeName(project.title)}.svg`);
+export const downloadSvg = (project: ProjectModel, language: Language) =>
+  download(projectSvg(project, language), 'image/svg+xml;charset=utf-8', `${safeName(project.title)}.svg`);
 
-export const downloadPng = async (project: ProjectModel) => {
-  const svg = projectSvg(project);
+export const downloadPng = async (project: ProjectModel, language: Language) => {
+  const svg = projectSvg(project, language);
   const image = new Image();
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
   image.src = url;

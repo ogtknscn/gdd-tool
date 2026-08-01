@@ -70,6 +70,7 @@ type State = {
   addRelation: (source: string, target: string, kind: EdgeKind) => void;
 
   addPlaygroundItem: (type: PlaygroundItem['type'], text?: string) => void;
+  addPlaygroundImage: (imageData: string, caption?: string) => void;
   updatePlaygroundItem: (id: string, text: string) => void;
   movePlaygroundItem: (id: string, x: number, y: number) => void;
   removePlaygroundItem: (id: string) => void;
@@ -390,6 +391,15 @@ export const useProjectStore = create<State>((set, get) => ({
       playgroundItems: [
         ...project.playgroundItems,
         { id: createId('playground'), pageId: project.activePageId, type, text, x: 36 + project.playgroundItems.length * 18, y: 80 + project.playgroundItems.length * 18 },
+      ],
+    })),
+
+  addPlaygroundImage: (imageData, caption = '') =>
+    mutate(set, get, (project) => ({
+      ...project,
+      playgroundItems: [
+        ...project.playgroundItems,
+        { id: createId('playground'), pageId: project.activePageId, type: 'image', text: caption, imageData, x: 36 + project.playgroundItems.length * 18, y: 80 + project.playgroundItems.length * 18 },
       ],
     })),
 

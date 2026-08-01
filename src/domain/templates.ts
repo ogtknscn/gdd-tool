@@ -322,3 +322,24 @@ export const templates: ProjectTemplate[] = [
 ];
 
 export const findTemplate = (id: TemplateId) => templates.find((template) => template.id === id)!;
+
+// English overlay for the template picker's descriptive metadata only - the
+// node/edge titles a chosen template actually generates (e.g. "Kaynak
+// kazanımı") stay Turkish regardless of UI language, same as any other
+// project content a user could type or edit afterwards.
+type TemplatePickerText = Pick<ProjectTemplate, 'name' | 'description' | 'category' | 'useCase' | 'startingCounts' | 'preview'>;
+const TEMPLATE_TEXT_EN: Record<TemplateId, TemplatePickerText> = {
+  blank: { name: 'Blank workspace', description: 'Place ideas freely.', category: 'Starter', useCase: 'Free design from scratch', startingCounts: '0 items', preview: 'Free canvas' },
+  'core-loop': { name: 'Core loop', description: 'Build the player loop with mechanic, reward and UI.', category: 'System', useCase: 'Basic game loop', startingCounts: '4 items · 3 relations', preview: 'Explore -> Fight -> Reward' },
+  quest: { name: 'Quest flow', description: 'Connect quest steps, UI and reward.', category: 'Content', useCase: 'Quest flow', startingCounts: '4 items · 3 relations', preview: 'Take -> Complete -> Reward' },
+  'puzzle-level': { name: 'Puzzle level design', description: 'Build rule, state, discovery and solution flow together.', category: 'Puzzle', useCase: 'A single puzzle level', startingCounts: '9 items · 9 relations · 3 groups', preview: 'Rule -> State -> Solution' },
+  'puzzle-tutorial': { name: 'Puzzle tutorial sequence', description: 'Teach the rule, then move into guided practice and independent application.', category: 'Puzzle', useCase: 'Puzzle onboarding', startingCounts: '7 items · 7 relations · 3 groups', preview: 'Show -> Try -> Master' },
+  'combat-encounter': { name: 'Combat encounter', description: 'Encounter pacing, enemy behaviour and reward loop.', category: 'Combat', useCase: 'A single combat design', startingCounts: '4 items · 3 relations · 2 groups', preview: 'Entry -> Pressure -> Reward' },
+  'economy-progression': { name: 'Economy progression', description: 'Balance earning, spending and unlock pace.', category: 'Economy', useCase: 'Progression economy', startingCounts: '4 items · 3 relations · 2 groups', preview: 'Earn -> Spend -> Unlock' },
+  'branching-narrative': { name: 'Branching narrative', description: 'Choices, outcomes and callback conditions.', category: 'Narrative', useCase: 'Branching dialogue', startingCounts: '5 items · 5 relations · 2 groups', preview: 'Choice -> Branch -> Outcome' },
+  'ui-flow': { name: 'UI flow', description: 'Map screen transitions, states and feedback.', category: 'UI', useCase: 'Player UI flow', startingCounts: '4 items · 3 relations · 2 groups', preview: 'Entry -> Screen -> Action' },
+  'roguelite-run-loop': { name: 'Roguelite run loop', description: 'Run start, choice, power-up and repeat loop.', category: 'Roguelite', useCase: 'A single run loop', startingCounts: '5 items · 5 relations · 3 groups', preview: 'Choose -> Fight -> Power up -> Repeat' },
+};
+
+export const templatePickerText = (template: ProjectTemplate, language: 'tr' | 'en'): TemplatePickerText =>
+  language === 'en' ? TEMPLATE_TEXT_EN[template.id] : template;

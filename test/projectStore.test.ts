@@ -93,6 +93,11 @@ describe('project store', () => {
     useProjectStore.getState().movePlaygroundItem(item.id, 420, 260);
     expect(useProjectStore.getState().project.playgroundItems[0]).toMatchObject({ id: item.id, x: 420, y: 260 });
   });
+  it('adds a playground image item with its data URL and an optional caption', () => {
+    useProjectStore.getState().addPlaygroundImage('data:image/png;base64,AAA=', 'Reference shot');
+    const item = useProjectStore.getState().project.playgroundItems[0];
+    expect(item).toMatchObject({ type: 'image', imageData: 'data:image/png;base64,AAA=', text: 'Reference shot' });
+  });
   it('captures a low-friction idea onto its own page without switching the active page', () => {
     const store = useProjectStore.getState(); const activeBefore = store.project.activePageId;
     store.addIdea('Yeni bir güçlenme fikri\nDetay satırı');

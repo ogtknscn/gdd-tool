@@ -12,7 +12,7 @@ describe('projectSvg', () => {
       objects: [node],
       placements: [{ nodeId: node.id, pageId: base.activePageId, x: 0, y: 0 }],
     };
-    const svg = projectSvg(project);
+    const svg = projectSvg(project, 'tr');
     expect(svg).toContain('Oyuncu&#39;nun kalkanı');
     expect(svg).not.toContain('undefined');
   });

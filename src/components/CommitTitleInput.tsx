@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { t, type Language } from '../domain/i18n';
+import { useUiStore } from '../stores/uiStore';
 
-export const normalizeCommittedTitle = (value: string) => value.trim() || 'İsimsiz öğe';
+export const normalizeCommittedTitle = (value: string, language: Language = 'tr') => value.trim() || t(language, 'card.unnamedItem');
 export const titleKeyAction = (key: string, isComposing: boolean): 'none' | 'commit' | 'cancel' => {
   if (isComposing) return 'none';
   if (key === 'Enter') return 'commit';
@@ -12,11 +14,12 @@ type Props = { value: string; onCommit: (value: string) => void; className?: str
 
 /** Keeps transient typing local so one finished edit creates exactly one project mutation. */
 export function CommitTitleInput({ value, onCommit, className, 'aria-label': ariaLabel }: Props) {
+  const language = useUiStore((state) => state.language);
   const [draft, setDraft] = useState(value); const cancelled = useRef(false);
   useEffect(() => setDraft(value), [value]);
   const commit = () => {
     if (cancelled.current) { cancelled.current = false; setDraft(value); return; }
-    const normalized = normalizeCommittedTitle(draft); setDraft(normalized);
+    const normalized = normalizeCommittedTitle(draft, language); setDraft(normalized);
     if (normalized !== value) onCommit(normalized);
   };
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {

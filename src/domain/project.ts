@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { t, type Language } from './i18n';
 import {
   ChecklistItemSchema,
   GddPageSchema,
@@ -262,7 +263,7 @@ function upgradeV6ToV7(value: unknown): ProjectModel {
   return ProjectSchema.parse({ ...v6, schemaVersion: 7, playgroundItems: [] });
 }
 
-export function parseAndMigrateProject(value: unknown): ProjectModel {
+export function parseAndMigrateProject(value: unknown, language: Language = 'tr'): ProjectModel {
   const version = z.object({ schemaVersion: z.number() }).passthrough().parse(value).schemaVersion;
 
   if (version === 7) return ProjectSchema.parse(value);
@@ -273,8 +274,5 @@ export function parseAndMigrateProject(value: unknown): ProjectModel {
   if (version === 2) return upgradeV5ToV7(upgradeV4ToV5(upgradeV3ToV4(upgradeV2ToV3(V2Schema.parse(value)))));
   if (version === 1) return upgradeV5ToV7(upgradeV4ToV5(upgradeV3ToV4(upgradeV2ToV3(upgradeV1ToV2(value)))));
 
-  throw new Error(
-    `Bu proje dosyası GDD Tool'un bu sürümünün tanımadığı bir schemaVersion (${version}) içeriyor. ` +
-      'Muhtemelen dosya daha yeni bir GDD Tool sürümüyle oluşturuldu; GDD Tool\'u güncelleyin.',
-  );
+  throw new Error(t(language, 'project.unsupportedSchemaVersion', { version }));
 }
