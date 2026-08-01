@@ -1,13 +1,10 @@
 import { z } from 'zod';
 import {
   ChecklistItemSchema,
-  GddEdgeSchema,
-  GddGroupSchema,
-  GddNodeSchema,
   GddPageSchema,
+  MAX_EDGE_LABEL_LENGTH,
   PlacementSchema,
   ProjectSchema,
-  nodeKinds,
   type GddNode,
   type NodeKind,
   type ProjectModel,
@@ -57,21 +54,60 @@ export const touch = (project: ProjectModel): ProjectModel => ({
 // Each schema below describes exactly the on-disk shape of that historical
 // schemaVersion, so old project files can still be opened. Do not "clean up"
 // a legacy schema to match the current one - they must stay frozen in time.
+//
+// This means these schemas must not reference the *live* GddNodeSchema,
+// GddEdgeSchema, GddGroupSchema, nodeKinds, or edgeKinds from types.ts -
+// doing so silently breaks old files the moment the live schema changes
+// (e.g. a required field added to GddNodeSchema, or a kind removed from
+// nodeKinds, would retroactively fail to parse V1-V5 files even though
+// nothing about those files changed). Each legacy shape is fully
+// self-contained instead. (Found 2026-08-01: LegacyNodeSchema/
+// LegacyDetailedNodeSchema/V5Schema were doing exactly this before this fix.)
+
+const LEGACY_NODE_KINDS = ['mechanic', 'entity', 'level', 'quest', 'ui', 'asset'] as const;
+const LEGACY_EDGE_KINDS = ['requires', 'affects', 'produces', 'tested_by'] as const;
+const LEGACY_NODE_STATUSES = ['draft', 'in_progress', 'validated', 'archived'] as const;
 
 const LegacyNodeSchema = z.object({
   id: z.string().min(1),
-  kind: z.enum(nodeKinds),
+  kind: z.enum(LEGACY_NODE_KINDS),
   title: z.string().min(1),
   summary: z.string().default(''),
   properties: z.record(z.string(), z.string()).default({}),
 });
 
-const LegacyEdgeSchema = GddEdgeSchema.extend({
-  customLabel: z.string().max(120).optional(),
+const LegacyEdgeSchema = z.object({
+  id: z.string().min(1),
+  source: z.string(),
+  target: z.string(),
+  kind: z.enum(LEGACY_EDGE_KINDS),
+  customLabel: z.string().max(MAX_EDGE_LABEL_LENGTH).optional(),
 });
 
-const LegacyDetailedNodeSchema = GddNodeSchema.extend({
+// Frozen shape of a fully-detailed node as of V3-V5 (adds the long fields,
+// status and tags introduced by upgradeNode/upgradeV2ToV3 on top of
+// LegacyNodeSchema). Independent of GddNodeSchema on purpose - see note above.
+const LegacyDetailedNodeSchema = LegacyNodeSchema.extend({
+  pageId: z.string(),
+  status: z.enum(LEGACY_NODE_STATUSES).default('draft'),
+  tags: z.array(z.string()).default([]),
+  designIntent: z.string().default(''),
+  playerExperience: z.string().default(''),
+  specification: z.string().default(''),
+  testNotes: z.string().default(''),
   checklist: z.array(ChecklistItemSchema).optional(),
+});
+
+// Frozen shape of a group as of V4-V5 (memberNodeIds/parentGroupId never
+// changed since introduction) - independent of the live GddGroupSchema.
+const LegacyGroupSchema = z.object({
+  id: z.string().min(1),
+  pageId: z.string().min(1),
+  title: z.string(),
+  color: z.string().min(1),
+  memberNodeIds: z.array(z.string()),
+  parentGroupId: z.string().min(1).optional(),
+  collapsed: z.boolean().default(false),
 });
 
 const V1Schema = z.object({
@@ -81,7 +117,7 @@ const V1Schema = z.object({
   updatedAt: z.string(),
   objects: z.array(LegacyNodeSchema),
   placements: z.array(PlacementSchema.omit({ pageId: true })),
-  relations: z.array(LegacyEdgeSchema.omit({ pageId: true })),
+  relations: z.array(LegacyEdgeSchema),
 });
 
 const V2Schema = z.object({
@@ -93,7 +129,7 @@ const V2Schema = z.object({
   activePageId: z.string(),
   objects: z.array(LegacyNodeSchema.extend({ pageId: z.string() })),
   placements: z.array(PlacementSchema),
-  relations: z.array(LegacyEdgeSchema),
+  relations: z.array(LegacyEdgeSchema.extend({ pageId: z.string() })),
 });
 
 const V3Schema = z.object({
@@ -105,7 +141,7 @@ const V3Schema = z.object({
   activePageId: z.string(),
   objects: z.array(LegacyDetailedNodeSchema),
   placements: z.array(PlacementSchema),
-  relations: z.array(LegacyEdgeSchema),
+  relations: z.array(LegacyEdgeSchema.extend({ pageId: z.string() })),
 });
 
 const V4Schema = z.object({
@@ -117,8 +153,8 @@ const V4Schema = z.object({
   activePageId: z.string(),
   objects: z.array(LegacyDetailedNodeSchema),
   placements: z.array(PlacementSchema),
-  relations: z.array(GddEdgeSchema),
-  groups: z.array(GddGroupSchema.omit({ collapsed: true })),
+  relations: z.array(LegacyEdgeSchema.extend({ pageId: z.string(), customLabel: z.string().max(MAX_EDGE_LABEL_LENGTH) })),
+  groups: z.array(LegacyGroupSchema.omit({ collapsed: true })),
 });
 
 const V5Schema = z.object({
@@ -128,16 +164,18 @@ const V5Schema = z.object({
   updatedAt: z.string(),
   pages: z.array(z.object({ id: z.string(), title: z.string() })).min(1),
   activePageId: z.string(),
-  objects: z.array(GddNodeSchema),
+  objects: z.array(LegacyDetailedNodeSchema.extend({ checklist: z.array(ChecklistItemSchema) })),
   placements: z.array(PlacementSchema),
-  relations: z.array(GddEdgeSchema),
-  groups: z.array(GddGroupSchema),
+  relations: z.array(LegacyEdgeSchema.extend({ pageId: z.string(), customLabel: z.string().max(MAX_EDGE_LABEL_LENGTH) })),
+  groups: z.array(LegacyGroupSchema),
 });
 
-// V6 was V7 minus playgroundItems (added in V7); frozen exactly as it existed
-// so a future ProjectSchema change can't silently break old V6 files the way
-// upgradeV6ToV7 used to (it previously validated V6 input directly against
-// the *current* ProjectSchema instead of its own frozen shape).
+// V6 was V7 minus playgroundItems (added in V7). The node/edge/group shapes
+// never changed between V5 and V6, so this reuses the same frozen sub-schemas
+// as V5Schema rather than the live GddNodeSchema/GddEdgeSchema/GddGroupSchema
+// - the previous version of this schema referenced those live schemas
+// directly, which still left V6 files exposed to future ProjectSchema
+// changes despite the comment here claiming it was already frozen.
 const V6Schema = z.object({
   schemaVersion: z.literal(6),
   id: z.string(),
@@ -145,10 +183,10 @@ const V6Schema = z.object({
   updatedAt: z.string(),
   pages: z.array(GddPageSchema).min(1),
   activePageId: z.string().min(1),
-  objects: z.array(GddNodeSchema),
+  objects: z.array(LegacyDetailedNodeSchema.extend({ checklist: z.array(ChecklistItemSchema) })),
   placements: z.array(PlacementSchema),
-  relations: z.array(GddEdgeSchema),
-  groups: z.array(GddGroupSchema),
+  relations: z.array(LegacyEdgeSchema.extend({ pageId: z.string(), customLabel: z.string().max(MAX_EDGE_LABEL_LENGTH) })),
+  groups: z.array(LegacyGroupSchema),
 });
 
 const upgradeNode = (node: z.infer<typeof LegacyNodeSchema> & { pageId: string }): GddNode => ({

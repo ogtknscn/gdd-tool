@@ -5,7 +5,7 @@ import { reconcileFlowNodes } from '../src/components/Canvas';
 import type { GddCardData } from '../src/components/GddNodeCard';
 
 const makeNode = (id: string, x: number, y: number): Node<GddCardData> => ({
-  id, type: 'gdd', position: { x, y }, data: { item: { ...createObject('mechanic', 'page-1'), id }, density: 'standard', invalid: false },
+  id, type: 'gdd', position: { x, y }, data: { item: { ...createObject('mechanic', 'page-1'), id }, density: 'standard', invalid: false, completeness: 0, readinessView: false },
 });
 
 describe('canvas node reconciliation', () => {
