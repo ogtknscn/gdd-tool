@@ -7,7 +7,7 @@ import { useProjectStore } from '../stores/projectStore';
 import { useUiStore, type CardDensity } from '../stores/uiStore';
 
 export type GddCardData = { item: GddNode; density: Exclude<CardDensity, 'auto'>; invalid: boolean; completeness: number; readinessView: boolean };
-const accents = { mechanic: '#8b74ff', entity: '#19b8b2', level: '#e59647', quest: '#e86e9b', ui: '#62a0ef', asset: '#83a963' };
+const accents: Record<GddNode['kind'], string> = { mechanic: '#8b74ff', entity: '#19b8b2', level: '#e59647', quest: '#e86e9b', ui: '#62a0ef', asset: '#83a963', narrative: '#c084fc', system: '#eab308', goal: '#34d399', risk: '#ef4444' };
 
 export function GddNodeCard({ id, data, selected, dragging }: NodeProps<Node<GddCardData>>) {
   const openDetail = useProjectStore((state) => state.openDetail);

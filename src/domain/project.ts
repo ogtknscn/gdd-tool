@@ -189,7 +189,7 @@ const V6Schema = z.object({
   groups: z.array(LegacyGroupSchema),
 });
 
-const upgradeNode = (node: z.infer<typeof LegacyNodeSchema> & { pageId: string }): GddNode => ({
+const upgradeNode = (node: z.infer<typeof LegacyNodeSchema> & { pageId: string }): z.infer<typeof LegacyDetailedNodeSchema> => ({
   ...node,
   status: 'draft',
   tags: [],

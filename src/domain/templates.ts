@@ -222,9 +222,9 @@ export const templates: ProjectTemplate[] = [
     create: () => guidedTemplate(
       'Economy progression',
       [
-        ['source', 'mechanic', 'Kaynak kazanımı', '', 0, 100],
-        ['currency', 'entity', 'Para birimi', '', 250, 100],
-        ['sink', 'mechanic', 'Harcama noktası', '', 500, 100],
+        ['source', 'system', 'Kaynak kazanımı', '', 0, 100],
+        ['currency', 'system', 'Para birimi', '', 250, 100],
+        ['sink', 'system', 'Harcama noktası', '', 500, 100],
         ['unlock', 'quest', 'Açılan içerik', '', 750, 100],
       ],
       [
@@ -246,10 +246,10 @@ export const templates: ProjectTemplate[] = [
     create: () => guidedTemplate(
       'Branching narrative',
       [
-        ['scene', 'quest', 'Sahne girişi', '', 0, 100],
+        ['scene', 'narrative', 'Sahne girişi', '', 0, 100],
         ['choice', 'ui', 'Oyuncu seçimi', '', 250, 100],
-        ['a', 'quest', 'A dalı', '', 500, 30],
-        ['b', 'quest', 'B dalı', '', 500, 180],
+        ['a', 'narrative', 'A dalı', '', 500, 30],
+        ['b', 'narrative', 'B dalı', '', 500, 180],
         ['outcome', 'entity', 'Kalıcı sonuç', '', 750, 100],
       ],
       [

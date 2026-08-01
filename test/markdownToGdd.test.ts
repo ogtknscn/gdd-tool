@@ -104,11 +104,21 @@ describe('convertMarkdownToProject', () => {
   it('turns an Open Questions section into an unchecked checklist instead of prose', () => {
     const project = convertMarkdownToProject(IDEA_WITH_OPEN_QUESTIONS);
     const openQuestions = project.objects.find((node) => node.title === 'Open Questions')!;
-    expect(openQuestions.kind).toBe('quest');
+    expect(openQuestions.kind).toBe('risk');
     expect(openQuestions.checklist).toEqual([
       { id: expect.any(String), text: 'What is the core monetization loop?', done: false },
       { id: expect.any(String), text: 'Should there be a multiplayer mode?', done: false },
     ]);
+  });
+
+  it('classifies narrative, economy, goal and risk headings into their dedicated kinds', () => {
+    const markdown = `# Sample\n\n## Narrative Beats\nBody\n\n## Economy Loop\nBody\n\n## Success Metrics\nBody\n\n## Key Risks\nBody\n`;
+    const project = convertMarkdownToProject(markdown);
+    const byTitle = Object.fromEntries(project.objects.map((node) => [node.title, node]));
+    expect(byTitle['Narrative Beats'].kind).toBe('narrative');
+    expect(byTitle['Economy Loop'].kind).toBe('system');
+    expect(byTitle['Success Metrics'].kind).toBe('goal');
+    expect(byTitle['Key Risks'].kind).toBe('risk');
   });
 
   it('honors a title override', () => {
@@ -131,7 +141,7 @@ describe('convertMarkdownToProject', () => {
     expect(byTitle['Platform & Motor'].kind).toBe('asset');
 
     const openQuestions = byTitle['Açık Sorular'];
-    expect(openQuestions.kind).toBe('quest');
+    expect(openQuestions.kind).toBe('risk');
     expect(openQuestions.checklist).toHaveLength(2);
     expect(openQuestions.checklist[0].text).toBe('Seviye Geçişi nasıl sunulacak?');
   });

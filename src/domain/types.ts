@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const nodeKinds = ['mechanic', 'entity', 'level', 'quest', 'ui', 'asset'] as const;
+export const nodeKinds = ['mechanic', 'entity', 'level', 'quest', 'ui', 'asset', 'narrative', 'system', 'goal', 'risk'] as const;
 export type NodeKind = (typeof nodeKinds)[number];
 
 export const edgeKinds = ['requires', 'affects', 'produces', 'tested_by'] as const;
@@ -102,6 +102,10 @@ export const NODE_LABELS: Record<NodeKind, string> = {
   quest: 'Görev',
   ui: 'Arayüz',
   asset: 'Asset',
+  narrative: 'Anlatı',
+  system: 'Sistem',
+  goal: 'Hedef',
+  risk: 'Risk',
 };
 
 export const EDGE_LABELS: Record<EdgeKind, string> = {

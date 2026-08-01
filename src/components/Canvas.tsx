@@ -6,7 +6,7 @@ import { confirmRemoveRelation } from '../commands/relationCommands';
 import { nodeCompleteness, pageReadiness } from '../domain/completeness';
 import { groupFrameGeometry } from '../domain/groups';
 import { useValidationIssues } from '../domain/validation';
-import { EDGE_LABELS, edgeKinds, NODE_LABELS, nodeStatuses, STATUS_LABELS, type EdgeKind } from '../domain/types';
+import { EDGE_LABELS, edgeKinds, NODE_LABELS, nodeKinds, nodeStatuses, STATUS_LABELS, type EdgeKind, type NodeKind } from '../domain/types';
 import { useProjectStore } from '../stores/projectStore';
 import { useUiStore } from '../stores/uiStore';
 import { GddEdge, type GddEdgeData } from './GddEdge';
@@ -15,7 +15,7 @@ import { GddNodeCard, type GddCardData } from './GddNodeCard';
 import { GroupCreateDialog } from './GroupCreateDialog';
 import { NodeQuickAdd } from './NodeQuickAdd';
 
-const colors = { mechanic: '#8b74ff', entity: '#19b8b2', level: '#e59647', quest: '#e86e9b', ui: '#62a0ef', asset: '#83a963' };
+const colors: Record<NodeKind, string> = { mechanic: '#8b74ff', entity: '#19b8b2', level: '#e59647', quest: '#e86e9b', ui: '#62a0ef', asset: '#83a963', narrative: '#c084fc', system: '#eab308', goal: '#34d399', risk: '#ef4444' };
 const nodeTypes = { gdd: GddNodeCard, group: GddGroupFrame }; const edgeTypes = { gdd: GddEdge };
 const ariaLabelConfig = { 'node.a11yDescription.default': 'Bir kart seçmek için Enter veya Boşluk tuşuna basın. Ok tuşlarıyla taşıyın.', 'edge.a11yDescription.default': 'Bir bağlantı seçmek için Enter veya Boşluk tuşuna basın.', 'controls.ariaLabel': 'Tuval kontrolleri', 'controls.zoomIn.ariaLabel': 'Yakınlaştır', 'controls.zoomOut.ariaLabel': 'Uzaklaştır', 'controls.fitView.ariaLabel': 'Tümünü görünür yap', 'controls.interactive.ariaLabel': 'Etkileşimi kilitle', 'minimap.ariaLabel': 'Tuval genel görünümü', 'handle.ariaLabel': 'Bağlantı noktası' };
 type CanvasNodeData = GddCardData | GddGroupFrameData;
@@ -25,7 +25,7 @@ function FilterPopover({ filter, tags, update }: FilterPopoverProps) {
   return <div className="filter-popover" role="dialog" aria-label="Öğe filtreleri">
     <label>Arama<input autoFocus placeholder="Ara…" value={filter.query} onChange={(event) => update({ query: event.target.value })} /></label>
     <label><input type="checkbox" checked={filter.focusMode} onChange={(event) => update({ focusMode: event.target.checked })} />Odak modu</label>
-    <fieldset><legend>Tür</legend>{(['mechanic','entity','level','quest','ui','asset'] as const).map((kind) => <button type="button" key={kind} aria-pressed={filter.kinds.includes(kind)} onClick={() => update({ kinds: toggle(filter.kinds, kind) })}>{NODE_LABELS[kind]}</button>)}</fieldset>
+    <fieldset><legend>Tür</legend>{nodeKinds.map((kind) => <button type="button" key={kind} aria-pressed={filter.kinds.includes(kind)} onClick={() => update({ kinds: toggle(filter.kinds, kind) })}>{NODE_LABELS[kind]}</button>)}</fieldset>
     <fieldset><legend>Durum</legend>{nodeStatuses.map((status) => <button type="button" key={status} aria-pressed={filter.statuses.includes(status)} onClick={() => update({ statuses: toggle(filter.statuses, status) })}>{STATUS_LABELS[status]}</button>)}</fieldset>
     {tags.length > 0 && <fieldset><legend>Etiket</legend>{tags.map((tag) => <button type="button" key={tag} aria-pressed={filter.tags.includes(tag)} onClick={() => update({ tags: toggle(filter.tags, tag) })}>{tag}</button>)}</fieldset>}
     <button type="button" onClick={() => update({ query: '', kinds: [], statuses: [], tags: [], focusMode: false })}>Filtreleri temizle</button>

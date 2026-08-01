@@ -32,4 +32,24 @@ export const TYPE_FIELDS: Record<NodeKind, PropertyField[]> = {
     { key: 'requirements', label: 'Üretim gereksinimleri', placeholder: 'Boyut, format, teknik bütçe…', multiline: true },
     { key: 'dependencies', label: 'Bağımlılıklar', placeholder: 'Bağlı kaynaklar ve teslimatlar…', multiline: true },
   ],
+  narrative: [
+    { key: 'beatType', label: 'Beat türü', placeholder: 'Sahne, diyalog, cutscene, dallanma…' },
+    { key: 'charactersInvolved', label: 'Dahil olan karakterler', placeholder: 'Bu anda kim var, kim konuşuyor…' },
+    { key: 'emotionalTarget', label: 'Duygusal hedef', placeholder: 'Oyuncu bu anda ne hissetmeli?', multiline: true },
+  ],
+  system: [
+    { key: 'resourcesTouched', label: 'Etkilenen kaynaklar', placeholder: 'Hangi para birimi, kaynak veya istatistik değişiyor?' },
+    { key: 'sourceOrSink', label: 'Kaynak mı, gider mi?', placeholder: 'Üretiyor mu, tüketiyor mu, dönüştürüyor mu?' },
+    { key: 'tuningValues', label: 'Denge değerleri', placeholder: 'Oranlar, eğriler, sınırlar…', multiline: true },
+  ],
+  goal: [
+    { key: 'targetValue', label: 'Hedef değer', placeholder: 'Ölçülebilir hedef (ör. D7 retention %25)' },
+    { key: 'measurementMethod', label: 'Ölçüm yöntemi', placeholder: 'Bu nasıl ölçülecek?' },
+    { key: 'currentStatus', label: 'Güncel durum', placeholder: 'Şu anki değer veya gözlem…', multiline: true },
+  ],
+  risk: [
+    { key: 'severity', label: 'Ciddiyet', placeholder: 'Düşük, orta, yüksek…' },
+    { key: 'owner', label: 'Sorumlu', placeholder: 'Bunu kim çözecek veya takip edecek?' },
+    { key: 'resolutionCriteria', label: 'Çözülme kriteri', placeholder: 'Bu ne zaman "çözüldü" sayılır?', multiline: true },
+  ],
 };

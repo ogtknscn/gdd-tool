@@ -48,9 +48,14 @@ const KIND_KEYWORDS: Array<[NodeKind, string[]]> = [
   ['mechanic', ['mechanic', 'mekanik', 'core loop', 'gameplay loop', 'core flow', 'rules', 'kural']],
   ['ui', ['ui/ux', 'ui', 'ux', 'interface', 'hud', 'menu', 'arayuz', 'arabirim']],
   ['level', ['level', 'content design', 'world design', 'encounter', 'bolum', 'seviye']],
+  ['narrative', ['narrative', 'story', 'anlati', 'hikaye', 'lore', 'dialogue', 'diyalog', 'character arc', 'senaryo']],
+  ['system', ['economy', 'ekonomi', 'progression', 'ilerleme', 'monetization', 'monetizasyon', 'currency', 'para birimi']],
   // NOTE: bare "hedef" (Turkish for "goal/target") is deliberately excluded
   // here - it also appears in unrelated headings like "Hedef Kitle" (target
   // audience), so it produced false positives during real-fixture testing.
+  // "success metric"/"basari kriteri" are specific enough to avoid that trap.
+  ['goal', ['success metric', 'kpi', 'success criteria', 'basari kriteri', 'basari metrigi']],
+  ['risk', ['risk', 'assumption', 'varsayim']],
   ['quest', ['quest', 'objective', 'edge case', 'gorev']],
   ['asset', ['asset', 'audio', 'music', 'art', 'vfx', 'sfx', 'technical requirement', 'platform', 'engine', 'ses', 'muzik', 'sanat', 'gorsel', 'motor']],
 ];
@@ -116,9 +121,9 @@ function buildNodeFromSection(section: MarkdownSection, pageId: string): GddNode
   if (isOpenQuestionsHeading(section.heading)) {
     const items = extractBulletItems(section.body);
     return {
-      id: createId('quest'),
+      id: createId('risk'),
       pageId,
-      kind: 'quest',
+      kind: 'risk',
       title: section.heading,
       summary: 'İçe aktarma sırasında bulunan çözülmemiş kararlar.',
       status: 'draft',
