@@ -78,6 +78,46 @@ describe('project store', () => {
     expect(useProjectStore.getState().project.activePageId).toBe(firstPage);
     expect(useProjectStore.getState().project.objects.every((node) => node.pageId === firstPage)).toBe(true);
   });
+  it('removes playground items that belong to a deleted page', () => {
+    const store = useProjectStore.getState(); const firstPage = store.project.activePageId;
+    store.addPage('Combat'); const secondPage = useProjectStore.getState().project.activePageId;
+    useProjectStore.getState().addPlaygroundItem('sticky', 'Not');
+    expect(useProjectStore.getState().project.playgroundItems).toHaveLength(1);
+    useProjectStore.getState().deletePage(secondPage);
+    expect(useProjectStore.getState().project.activePageId).toBe(firstPage);
+    expect(useProjectStore.getState().project.playgroundItems).toHaveLength(0);
+  });
+  it('captures a low-friction idea onto its own page without switching the active page', () => {
+    const store = useProjectStore.getState(); const activeBefore = store.project.activePageId;
+    store.addIdea('Yeni bir güçlenme fikri\nDetay satırı');
+    const state = useProjectStore.getState();
+    expect(state.project.activePageId).toBe(activeBefore);
+    const ideaPage = state.project.pages.find((page) => page.title === 'Fikirler')!;
+    expect(ideaPage).toBeDefined();
+    const idea = state.project.objects.find((node) => node.pageId === ideaPage.id)!;
+    expect(idea).toMatchObject({ kind: 'quest', title: 'Yeni bir güçlenme fikri', tags: ['fikir'] });
+    expect(idea.specification).toBe('Yeni bir güçlenme fikri\nDetay satırı');
+  });
+  it('reuses the existing Fikirler page for a second idea instead of creating a duplicate', () => {
+    const store = useProjectStore.getState();
+    store.addIdea('Birinci fikir'); store.addIdea('İkinci fikir');
+    const pages = useProjectStore.getState().project.pages.filter((page) => page.title === 'Fikirler');
+    expect(pages).toHaveLength(1);
+    expect(useProjectStore.getState().project.objects.filter((node) => node.pageId === pages[0].id)).toHaveLength(2);
+  });
+  it('ignores an empty idea submission', () => {
+    const store = useProjectStore.getState(); const before = useProjectStore.getState().undoStack.length;
+    store.addIdea('   ');
+    expect(useProjectStore.getState().undoStack).toHaveLength(before);
+    expect(useProjectStore.getState().project.pages.some((page) => page.title === 'Fikirler')).toBe(false);
+  });
+  it('caps the undo stack instead of growing it unbounded on long sessions', () => {
+    const store = useProjectStore.getState(); store.addNode('mechanic');
+    const id = useProjectStore.getState().project.objects[0].id;
+    for (let i = 0; i < 150; i += 1) useProjectStore.getState().updateNode(id, { summary: `v${i}` });
+    expect(useProjectStore.getState().undoStack.length).toBeLessThanOrEqual(100);
+    expect(useProjectStore.getState().project.objects[0].summary).toBe('v149');
+  });
   it('becomes clean again when undo returns to the saved content', () => {
     useProjectStore.getState().addNode('mechanic');
     const id = useProjectStore.getState().project.objects[0].id;
