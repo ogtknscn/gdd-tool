@@ -13,7 +13,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
-import { NODE_LABELS } from '../src/domain/types';
+import { nodeLabel, type NodeKind } from '../src/domain/types';
 import { convertMarkdownToProject } from './lib/markdown-to-gdd';
 
 function parseArgs(argv: string[]) {
@@ -57,7 +57,7 @@ function main() {
 
   console.log(`İçe aktarıldı: ${project.objects.length} öğe -> ${outputPath}`);
   for (const [kind, count] of counts) {
-    console.log(`  - ${NODE_LABELS[kind as keyof typeof NODE_LABELS]}: ${count}`);
+    console.log(`  - ${nodeLabel(kind as NodeKind, 'tr')}: ${count}`);
   }
   console.log('Not: kind ataması sezgiseldir, bağlantı yoktur. gdd-tool\'da açıp "Kontrol" ile gözden geçirin.');
 }
