@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const nodeKinds = ['mechanic', 'entity', 'level', 'quest', 'ui', 'asset', 'narrative', 'system', 'goal', 'risk'] as const;
 export type NodeKind = (typeof nodeKinds)[number];
 
-export const edgeKinds = ['requires', 'affects', 'produces', 'tested_by'] as const;
+export const edgeKinds = ['requires', 'affects', 'produces', 'tested_by', 'conflicts_with', 'teaches'] as const;
 export type EdgeKind = (typeof edgeKinds)[number];
 
 export const nodeStatuses = ['draft', 'in_progress', 'validated', 'archived'] as const;
@@ -113,6 +113,8 @@ export const EDGE_LABELS: Record<EdgeKind, string> = {
   affects: 'Etkiler',
   produces: 'Üretir',
   tested_by: 'Test edilir',
+  conflicts_with: 'Çakışır',
+  teaches: 'Öğretir',
 };
 
 export const STATUS_LABELS: Record<NodeStatus, string> = {

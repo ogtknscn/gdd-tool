@@ -25,4 +25,12 @@ describe('starter templates', () => {
   it('ships the five specialised templates with editable groups, checklist and labels', () => {
     (['combat-encounter', 'economy-progression', 'branching-narrative', 'ui-flow', 'roguelite-run-loop'] as const).forEach((id) => { const project = findTemplate(id).create(); expect(ProjectSchema.parse(project)).toEqual(project); expect(project.groups.length).toBeGreaterThan(0); expect(project.groups.every((group) => !group.collapsed)).toBe(true); expect(project.objects[0].checklist.length).toBeGreaterThan(0); expect(project.relations[0].customLabel).not.toBe(''); });
   });
+  it('models the economy and narrative templates with their dedicated kinds instead of generic ones', () => {
+    const economy = findTemplate('economy-progression').create();
+    expect(economy.objects.filter((node) => node.kind === 'system')).toHaveLength(3);
+    const narrative = findTemplate('branching-narrative').create();
+    expect(narrative.objects.filter((node) => node.kind === 'narrative')).toHaveLength(3);
+    const tutorial = findTemplate('puzzle-tutorial').create();
+    expect(tutorial.relations.find((edge) => edge.source === 'introduce' && edge.target === 'guided')?.kind).toBe('teaches');
+  });
 });

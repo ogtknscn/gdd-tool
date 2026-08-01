@@ -177,7 +177,7 @@ export const templates: ProjectTemplate[] = [
         ['mastery', 'quest', 'Ustalık kontrolü', 'Oyuncunun kuralı anladığını doğrular.', 780, 320],
       ],
       [
-        ['t1', 'introduce', 'guided', 'requires'],
+        ['t1', 'introduce', 'guided', 'teaches'],
         ['t2', 'guided', 'feedback', 'tested_by'],
         ['t3', 'feedback', 'state', 'affects'],
         ['t4', 'state', 'challenge', 'requires'],
