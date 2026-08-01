@@ -71,6 +71,7 @@ type State = {
 
   addPlaygroundItem: (type: PlaygroundItem['type'], text?: string) => void;
   updatePlaygroundItem: (id: string, text: string) => void;
+  movePlaygroundItem: (id: string, x: number, y: number) => void;
   removePlaygroundItem: (id: string) => void;
 
   updateRelation: (id: string, patch: Partial<Pick<GddEdge, 'customLabel'>>) => void;
@@ -396,6 +397,12 @@ export const useProjectStore = create<State>((set, get) => ({
     mutate(set, get, (project) => ({
       ...project,
       playgroundItems: project.playgroundItems.map((item) => (item.id === id ? { ...item, text } : item)),
+    })),
+
+  movePlaygroundItem: (id, x, y) =>
+    mutate(set, get, (project) => ({
+      ...project,
+      playgroundItems: project.playgroundItems.map((item) => (item.id === id ? { ...item, x, y } : item)),
     })),
 
   removePlaygroundItem: (id) =>

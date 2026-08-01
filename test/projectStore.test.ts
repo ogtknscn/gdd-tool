@@ -87,6 +87,12 @@ describe('project store', () => {
     expect(useProjectStore.getState().project.activePageId).toBe(firstPage);
     expect(useProjectStore.getState().project.playgroundItems).toHaveLength(0);
   });
+  it('moves a playground item to a new position, same as dragging a node card', () => {
+    useProjectStore.getState().addPlaygroundItem('sticky', 'Not');
+    const item = useProjectStore.getState().project.playgroundItems[0];
+    useProjectStore.getState().movePlaygroundItem(item.id, 420, 260);
+    expect(useProjectStore.getState().project.playgroundItems[0]).toMatchObject({ id: item.id, x: 420, y: 260 });
+  });
   it('captures a low-friction idea onto its own page without switching the active page', () => {
     const store = useProjectStore.getState(); const activeBefore = store.project.activePageId;
     store.addIdea('Yeni bir güçlenme fikri\nDetay satırı');
