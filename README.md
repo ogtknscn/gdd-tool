@@ -1,289 +1,290 @@
 # GDD Tool
 
-[![Latest release](https://img.shields.io/github/v/release/ogtknscn/gdd-tool?label=s%C3%BCr%C3%BCm)](https://github.com/ogtknscn/gdd-tool/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/ogtknscn/gdd-tool?label=release)](https://github.com/ogtknscn/gdd-tool/releases/latest)
 [![Windows release](https://github.com/ogtknscn/gdd-tool/actions/workflows/release.yml/badge.svg)](https://github.com/ogtknscn/gdd-tool/actions/workflows/release.yml)
+[![License: unspecified](https://img.shields.io/badge/license-unspecified-lightgrey)](#license)
 
-GDD Tool, oyun tasarım ekiplerinin fikirlerini uzun ve doğrusal belgeler yerine
-birbirine bağlı, yapılandırılmış GDD nesneleri olarak düzenleyebilmesi için
-geliştirilen yerel öncelikli bir Windows masaüstü uygulamasıdır.
+**GDD Tool** is a local-first Windows desktop application that lets game design teams
+organize their ideas as connected, structured GDD objects instead of long, linear
+documents.
 
 > [!IMPORTANT]
-> GDD Tool erken geliştirme aşamasındadır. Güncel sürüm; proje oluşturma,
-> görsel tuval, ayrıntılı GDD kartları, ilişkiler, doğrulama ve yerel dosya
-> kaydı için çalışan bir temel sunar. Gelecek vizyonundaki oynanabilir
-> playground ve gelişmiş simülasyon özellikleri henüz ürünün parçası değildir.
+> GDD Tool is in early development. The current release offers a working
+> foundation for project creation, a visual canvas, detailed GDD cards,
+> relations, validation, and local file storage. The playable-sandbox and
+> advanced-simulation features on the long-term roadmap are not part of the
+> product yet.
 
-Uygulama çevrimdışı çalışır. Ürün içinde AI, OpenAI API, model çağrısı, bulut
-hesabı veya API anahtarı bulunmaz.
+The application runs fully offline. There is no AI, no OpenAI API, no model
+calls, no cloud account, and no API key anywhere in the product.
 
-## Hızlı bağlantılar
+## Quick links
 
-- [En güncel sürümü indir](https://github.com/ogtknscn/gdd-tool/releases/latest)
-- [Kurulum ve ilk kullanım](#indirme-ve-kurulum)
-- [Klavye kısayolları](#klavye-kısayolları)
-- [Geliştirici kurulumu](#geliştirme)
-- [Bilinen sınırlar](#bilinen-sınırlar)
+- [Download the latest release](https://github.com/ogtknscn/gdd-tool/releases/latest)
+- [Installation and first use](#installation)
+- [Keyboard shortcuts](#keyboard-shortcuts)
+- [Development setup](#development)
+- [Known limitations](#known-limitations)
 
-## Neden GDD Tool?
+## Why GDD Tool?
 
-Klasik GDD belgeleri proje büyüdükçe uzun, doğrusal ve güncelliğini koruması
-zor yapılara dönüşebilir. Bir mekaniğin görevleri, arayüzü, seviyeleri ve asset
-gereksinimlerini nasıl etkilediğini tek bakışta görmek güçleşir.
+Traditional GDDs tend to become long, linear, and hard to keep up to date as a
+project grows. It becomes difficult to see, at a glance, how a single
+mechanic affects tasks, UI, levels, and asset requirements.
 
-GDD Tool iki çalışma biçimini bir araya getirir:
+GDD Tool combines two complementary ways of working:
 
-- Sistemleri ve aralarındaki ilişkileri görmek için yakınlaştırılabilir görsel
-  tuval
-- Her oyun tasarımı öğesini ayrıntılı tanımlamak için yapılandırılmış detay
-  paneli
+- A zoomable visual canvas for seeing systems and the relationships between
+  them
+- A structured detail panel for defining every game design element in depth
 
-Böylece ekip, oyunun genel sistem haritasını ve seçilen öğenin tasarım
-ayrıntılarını aynı proje içinde tutabilir. Amaç genel amaçlı bir beyaz tahta
-kopyası olmak değil; serbest düşünme alanını GDD'ye özgü veri ve ilişkilerle
-birleştirmektir.
+This lets a team keep both the game's overall system map and the design
+details of any selected element in the same project. The goal is not to be a
+general-purpose whiteboard clone; it is to combine free-form thinking space
+with GDD-specific data and relationships.
 
-## Mevcut özellikler
+## Current features
 
-### Görsel GDD çalışma alanı
+### Visual GDD workspace
 
-- Yakınlaştırma, uzaklaştırma, ekrana sığdırma ve minimap destekli tuval
-- Sürüklenerek konumlandırılabilen GDD kartları
-- Yakınlaştırma düzeyine göre değişebilen kompakt, standart ve detaylı kart
-  görünümleri
-- Birden fazla sayfa; sayfa ekleme, yeniden adlandırma ve silme
-- Outline, Inspector ve Notion benzeri ayrıntı paneli
-- `Ctrl+K` ile açılan yerel komut paleti
-- Geri alma ve yineleme geçmişi
-- Uygulama tasarımıyla uyumlu onay, hata ve bildirim pencereleri
+- Zoom in, zoom out, fit-to-screen, and a minimap-assisted canvas
+- Draggable, freely-positioned GDD cards
+- Compact, standard, and detailed card views that adapt to zoom level
+- Multiple pages, with add, rename, and delete support
+- Outline, Inspector, and a Notion-style detail panel
+- A local command palette, opened with `Ctrl+K`
+- Undo/redo history
+- Confirmation, error, and notification dialogs consistent with the app's design
 
-### GDD nesneleri
+### GDD objects
 
-Altı yapılandırılmış nesne türü bulunur:
+Six structured object types are supported:
 
-| Nesne | Örnek kullanım |
+| Object | Typical use |
 | --- | --- |
-| Mekanik | Kurallar, oyuncu girdileri ve geri bildirimler |
-| Varlık | Karakterler, düşmanlar, kaynaklar ve davranışlar |
-| Bölüm | Hedef, akış, tempo ve kısıtlar |
-| Görev | Tetikleyici, hedef adımları ve ödüller |
-| Arayüz | UI amacı, durumlar ve erişilebilirlik notları |
-| Asset | Kaynak türü, üretim gereksinimleri ve bağımlılıklar |
+| Mechanic | Rules, player inputs, and feedback |
+| Entity | Characters, enemies, resources, and behaviors |
+| Level | Goal, flow, pacing, and constraints |
+| Quest | Trigger, objective steps, and rewards |
+| UI | UI intent, states, and accessibility notes |
+| Asset | Resource type, production requirements, and dependencies |
 
-Her kartta başlık, kısa özet, durum ve etiketler tutulabilir. Ayrıntı panelinde
-ayrıca tasarım niyeti, hedeflenen oyuncu deneyimi, detaylı tanım, test notları
-ve nesne türüne özgü alanlar düzenlenebilir.
+Every card carries a title, a short summary, a status, and tags. The detail
+panel additionally holds design intent, target player experience, a detailed
+description, test notes, and object-type-specific fields.
 
-Kart durumları **Taslak**, **Üzerinde çalışılıyor**, **Doğrulandı** ve
-**Arşivlendi** olarak izlenir.
+Card status is tracked as **Draft**, **In progress**, **Validated**, and
+**Archived**.
 
-### İlişkiler
+### Relations
 
-Kartlar arasında dört tür ilişki kurulabilir:
+Four relation types can be created between cards:
 
-- Gerektirir
-- Etkiler
-- Üretir
-- Test edilir
+- Requires
+- Affects
+- Produces
+- Tested by
 
-İlişkiler tuvalden seçilebilir; tuval, Inspector veya kart ayrıntısından
-silinebilir. Seçili bir bağlantı `Delete` ya da `Backspace` ile de kaldırılabilir.
-Silme işlemi önce onay ister ve geri alınabilir.
+Relations can be selected from the canvas and removed from the canvas, the
+Inspector, or the card detail panel. A selected connection can also be
+removed with `Delete` or `Backspace`. Deletion always asks for confirmation
+first and can be undone.
 
-### Başlangıç şablonları
+### Starting templates
 
-Yeni proje oluştururken üç başlangıç noktası kullanılabilir:
+Three starting points are available when creating a new project:
 
-- **Boş çalışma alanı:** Serbest başlangıç
-- **Core loop:** Mekanik, ödül ve arayüz bağlantılarıyla temel oyuncu döngüsü
-- **Quest flow:** Görev adımları, arayüz ve ödül akışı
+- **Blank workspace:** a free-form start
+- **Core loop:** a base player loop with mechanic, reward, and UI connections
+- **Quest flow:** quest steps, UI, and reward flow
 
-Şablonlar şu anda yeni proje başlangıç noktalarıdır; açık sayfaya eklenen modül
-sistemi değildir.
+Templates are currently new-project starting points only; they are not a
+module system that can be added onto an already-open page.
 
-### Proje kontrolü
+### Project validation
 
-Yerleşik **Kontrol** aracı şu tür veri sorunlarını tespit eder:
+The built-in **Validate** tool detects the following kinds of data issues:
 
-- Geçersiz aktif sayfa ve sayfa referansları
-- Yinelenen nesne kimlikleri veya bağlantılar
-- Sahipsiz, görünmeyen ya da sayfası uyuşmayan yerleşimler
-- Kaynak veya hedefi bulunamayan bağlantılar
-- Bir nesnenin kendisine bağlanması
-- Sayfalar arasında geçersiz bağlantılar
-- `requires` ilişkilerindeki döngüler
+- Invalid active page or page references
+- Duplicate object IDs or connections
+- Orphaned, hidden, or page-mismatched placements
+- Connections whose source or target cannot be found
+- An object connected to itself
+- Invalid connections across pages
+- Cycles in `requires` relations
 
-Bir kontrol sonucuna tıklandığında uygulama mümkünse ilgili sayfaya ve karta
-yönelir.
+Clicking a validation result navigates the app to the relevant page and card
+whenever possible.
 
-## İndirme ve kurulum
+## Installation
 
-Desteklenen hazır dağıtım hedefi **Windows x64**'tür. En güncel sürümü
-[GitHub Releases](https://github.com/ogtknscn/gdd-tool/releases/latest)
-sayfasındaki **Assets** bölümünden indirin.
+The only supported prebuilt distribution target is **Windows x64**. Download
+the latest release from the **Assets** section of the
+[GitHub Releases](https://github.com/ogtknscn/gdd-tool/releases/latest) page.
 
-| Dosya | Kullanım |
+| File | Use case |
 | --- | --- |
-| `GDD-Tool-<sürüm>-x64-setup.exe` | Normal Windows kurulumu; çoğu kullanıcı için önerilir. |
-| `GDD-Tool-portable.exe` | Kurulum gerektirmeden doğrudan çalışır. |
+| `GDD-Tool-<version>-x64-setup.exe` | Standard Windows installer; recommended for most users |
+| `GDD-Tool-portable.exe` | Runs directly, no installation required |
 
-### Kurulum sürümü
+### Installer build
 
-1. En güncel sürüm sayfasını açın.
-2. `GDD-Tool-<sürüm>-x64-setup.exe` dosyasını indirin.
-3. Kurulum dosyasını çalıştırın.
-4. Kurulumu tamamlayıp GDD Tool'u Başlat menüsünden açın.
+1. Open the latest release page.
+2. Download `GDD-Tool-<version>-x64-setup.exe`.
+3. Run the installer.
+4. Complete setup and launch GDD Tool from the Start menu.
 
-### Portable sürüm
+### Portable build
 
-1. `GDD-Tool-portable.exe` dosyasını indirin.
-2. Yazma izniniz olan bir klasöre taşıyın.
-3. Dosyayı doğrudan çalıştırın.
+1. Download `GDD-Tool-portable.exe`.
+2. Move it to a folder you have write access to.
+3. Run the file directly.
 
-Portable sürüm geleneksel bir Windows kurulumu yapmaz. Projeler uygulamadan
-bağımsız `.gdd.json` dosyalarına kaydedilir; kurtarma verileri ise yine Windows
-uygulama veri dizininde tutulabilir.
+The portable build does not perform a traditional Windows install. Projects
+are saved to standalone `.gdd.json` files independent of the application;
+recovery data is still kept in the Windows application-data directory.
 
-### Windows SmartScreen uyarısı
+### Windows SmartScreen warning
 
-Mevcut paketler ticari bir kod imzalama sertifikasıyla imzalanmadığı için
-Windows SmartScreen ilk çalıştırmada uygulamayı tanınmayan bir yayıncı olarak
-gösterebilir. Bu uyarı Windows'un yayıncı imzasını doğrulayamadığını veya
-dosyanın henüz yeterli itibara sahip olmadığını belirtir.
+Because current packages are not signed with a commercial code-signing
+certificate, Windows SmartScreen may show the app as an unrecognized
+publisher on first run. This warning means Windows could not verify a
+publisher signature, or the file does not yet have enough reputation - it is
+not, by itself, evidence of a problem.
 
-Dosyayı yalnızca bu deponun resmi GitHub Releases sayfasından indirdiğinizden
-emin olun. Kaynağa güveniyorsanız **Daha fazla bilgi** bölümünde dosya adını
-kontrol ederek devam edebilirsiniz. Güvenmediğiniz bir kaynaktan alınan
-kopyaları çalıştırmayın.
+Only download the file from this repository's official GitHub Releases page.
+If you trust the source, you can proceed after checking the file name under
+**More info**. Do not run copies obtained from a source you do not trust.
 
-## İlk kullanım
+## First use
 
-1. Uygulamayı açın.
-2. **Boş çalışma alanı**, **Core loop** veya **Quest flow** şablonunu seçin.
-3. Sol oluşturma çubuğundan bir GDD nesnesi ekleyin.
-4. Kartı tuvalde istediğiniz konuma sürükleyin.
-5. Kartı seçerek hızlı işlemleri, çift tıklayarak ayrıntı panelini açın.
-6. Durum, etiket, tasarım niyeti, oyuncu deneyimi ve tür bazlı alanları
-   doldurun.
-7. Bağlantı türünü seçin ve kartları birbirine bağlayın.
-8. Gerekirse `+` ile yeni sayfa oluşturun; sayfa adına çift tıklayarak yeniden
-   adlandırın.
-9. Üst çubuktaki **Kontrol** ile proje sorunlarını inceleyin.
-10. **Kaydet** veya **Farklı kaydet** ile projeyi `.gdd.json` dosyasına yazın.
+1. Open the application.
+2. Choose the **Blank workspace**, **Core loop**, or **Quest flow** template.
+3. Add a GDD object from the left creation bar.
+4. Drag the card to the desired position on the canvas.
+5. Select a card for quick actions, or double-click it to open the detail panel.
+6. Fill in status, tags, design intent, player experience, and type-specific fields.
+7. Choose a connection type and link cards together.
+8. Create new pages with `+` as needed; double-click a page name to rename it.
+9. Review project issues with **Validate** in the top bar.
+10. Use **Save** or **Save As** to write the project to a `.gdd.json` file.
 
-Kaydedilmemiş değişikliklerle yeni proje oluştururken veya başka bir dosya
-açarken uygulama **Kaydet**, **Kaydetmeden devam** ve **İptal** seçeneklerini
-sunar.
+When creating a new project or opening another file with unsaved changes, the
+app offers **Save**, **Continue without saving**, and **Cancel**.
 
-## Proje dosyaları ve veri güvenliği
+## Project files and data safety
 
-### `.gdd.json` biçimi
+### The `.gdd.json` format
 
-GDD Tool projeleri okunabilir JSON snapshot'ları olarak saklanır. Güncel şema
-sürümü V3'tür. Ana veri modeli şu bölümleri ayrı tutar:
+GDD Tool projects are stored as human-readable JSON snapshots. The current
+schema version is V3. The core data model keeps the following sections
+separate:
 
-| Alan | İçerik |
+| Field | Contents |
 | --- | --- |
-| `pages` | Proje sayfaları |
-| `objects` | Yapılandırılmış GDD nesneleri |
-| `placements` | Nesnelerin sayfa ve tuval koordinatları |
-| `relations` | Nesneler arasındaki tipli bağlantılar |
-| `activePageId` | Son aktif sayfa |
-| `schemaVersion` | Dosya biçimi sürümü |
+| `pages` | Project pages |
+| `objects` | Structured GDD objects |
+| `placements` | Object positions per page and canvas coordinates |
+| `relations` | Typed connections between objects |
+| `activePageId` | Last active page |
+| `schemaVersion` | File format version |
 
-İçerik ile tuval konumu ayrı tutulduğu için kartın tasarım bilgileri ve görsel
-yerleşimi veri modelinde birbirinden bağımsızdır.
+Because content and canvas position are stored separately, a card's design
+information and its visual placement are independent in the data model.
 
-### Atomik kayıt
+### Atomic save
 
-Masaüstü uygulaması projeyi hedef dosyanın üzerine parça parça yazmaz. Önce aynı
-konumda geçici bir JSON dosyası oluşturur, sonra bu dosyayı Windows'un
-replace/write-through davranışıyla hedef dosyanın yerine geçirir. Bu yöntem
-kayıt sırasında yarım yazılmış dosya riskini azaltır; yine de önemli projeleri
-ayrıca yedeklemek önerilir.
+The desktop app does not write the project over the target file piece by
+piece. It first creates a temporary JSON file in the same location, then
+replaces the target file with it using Windows' replace/write-through
+behavior. This reduces the risk of a half-written file during a save, though
+backing up important projects separately is still recommended.
 
-### Yerel kurtarma kaydı
+### Local recovery snapshot
 
-Uygulama, kullanıcının açıkça kaydettiği proje dosyasından ayrı bir kurtarma
-snapshot'ı tutar. Proje değiştikten kısa süre sonra bu veri Windows uygulama
-veri dizinindeki `autosave.gdd.json` dosyasına yazılır.
+The app keeps a recovery snapshot separate from the project file the user
+explicitly saved. Shortly after a project changes, this data is written to
+`autosave.gdd.json` in the Windows application-data directory.
 
-Uygulama yeniden açıldığında mevcut kurtarma snapshot'ı yüklenir ve
-kaydedilmemiş değişiklik olarak işaretlenir. Bu kayıt normal **Kaydet** işleminin
-ve kullanıcının seçtiği `.gdd.json` dosyasının yerine geçmez.
+When the app is reopened, the existing recovery snapshot is loaded and marked
+as an unsaved change. This recovery record does not replace the normal
+**Save** action or the `.gdd.json` file the user chose.
 
-Tarayıcı tabanlı geliştirme ortamında `localStorage` yalnızca geliştirme ve test
-fallback'i olarak kullanılır. Paketlenmiş masaüstü uygulaması dosya işlemlerini
-Tauri/Rust komutlarıyla gerçekleştirir.
+In the browser-based development environment, `localStorage` is used only as
+a development and test fallback. The packaged desktop app performs all file
+operations through Tauri/Rust commands.
 
-### Eski proje dosyaları
+### Legacy project files
 
-V1 ve V2 proje dosyaları açılırken bellekte V3 biçimine yükseltilir:
+V1 and V2 project files are upgraded to the V3 format in memory when opened:
 
-- V1 içeriği bir **Genel Bakış** sayfasına taşınır.
-- V2 nesnelerine V3'teki durum, etiket ve ayrıntı alanları için güvenli
-  varsayılanlar eklenir.
-- Mevcut nesneler, yerleşimler, ilişkiler ve temel özellikler korunur.
+- V1 content is moved into a single **Overview** page.
+- V2 objects receive safe defaults for the status, tags, and detail fields
+  introduced in V3.
+- Existing objects, placements, relations, and core properties are preserved.
 
-Yükseltilmiş proje yeniden kaydedildiğinde V3 olarak yazılır. Eski ve önemli bir
-projeyi ilk kez açmadan önce dosyanın kopyasını almak iyi bir uygulamadır.
+An upgraded project is written back as V3 the next time it is saved. Before
+opening an older, important project for the first time, making a copy of the
+file first is good practice.
 
-### Gizlilik sınırı
+### Privacy boundary
 
-- Proje içeriği yerel dosyalarda tutulur.
-- Ürün içinde AI veya uzak model çağrısı yoktur.
-- Bulut hesabı veya zorunlu oturum açma yoktur.
-- Otomatik bulut yedekleme ya da gerçek zamanlı ekip senkronizasyonu yoktur.
-- Proje dosyaları şifrelenmez; hassas içeriği normal yerel dosya güvenliği
-  kurallarıyla koruyun.
+- Project content is stored in local files only.
+- There is no AI or remote model call in the product.
+- There is no cloud account and no mandatory sign-in.
+- There is no automatic cloud backup or real-time team sync.
+- Project files are not encrypted; protect sensitive content with normal
+  local file security practices.
 
-Bir `.gdd.json` dosyasını ekip arkadaşınızla paylaşmanız, proje içeriğini de
-paylaşmanız anlamına gelir.
+Sharing a `.gdd.json` file with a teammate means sharing the project content
+itself.
 
-## Klavye kısayolları
+## Keyboard shortcuts
 
-| Kısayol | İşlem |
+| Shortcut | Action |
 | --- | --- |
-| `Ctrl+N` | Yeni proje |
-| `Ctrl+O` | Proje aç |
-| `Ctrl+S` | Kaydet |
-| `Ctrl+Shift+S` | Farklı kaydet |
-| `Ctrl+Z` | Geri al |
-| `Ctrl+Shift+Z` veya `Ctrl+Y` | Yinele |
-| `Ctrl+K` | Komut paletini aç |
-| `?` | Uygulama içi kısayol yardımını aç |
-| Ok tuşları | Seçili kartı taşı |
-| `Delete` / `Backspace` | Seçili bağlantıyı onay alarak sil |
-| `Esc` | Destekleyen iletişim penceresini, paleti veya ayrıntı panelini kapat |
+| `Ctrl+N` | New project |
+| `Ctrl+O` | Open project |
+| `Ctrl+S` | Save |
+| `Ctrl+Shift+S` | Save as |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Shift+Z` or `Ctrl+Y` | Redo |
+| `Ctrl+K` | Open the command palette |
+| `?` | Open in-app shortcut help |
+| Arrow keys | Move the selected card |
+| `Delete` / `Backspace` | Delete the selected connection (with confirmation) |
+| `Esc` | Close the active dialog, palette, or detail panel |
 
-Metin girişi sırasında global kısayolların veya bağlantı silmenin istemeden
-çalışmaması için yazı alanları ayrıca korunur.
+Text input fields are guarded separately so global shortcuts and connection
+deletion do not fire unintentionally while typing.
 
-## Geliştirme
+## Development
 
-### Teknoloji yığını
+### Tech stack
 
-- **React 19 + TypeScript + Vite:** Arayüz ve üretim derlemesi
-- **React Flow / XYFlow:** Tuval, kartlar ve ilişkiler
-- **Zustand:** Proje, UI ve geri bildirim durumu
-- **Zod:** Veri doğrulama ve şema geçişleri
-- **Tauri 2 + Rust:** Masaüstü kabuğu, dosya seçicileri ve atomik kayıt
-- **Vitest:** Otomatik frontend ve domain testleri
+- **React 19 + TypeScript + Vite:** UI and production build
+- **React Flow / XYFlow:** canvas, cards, and relations
+- **Zustand:** project, UI, and feedback state
+- **Zod:** data validation and schema migrations
+- **Tauri 2 + Rust:** desktop shell, file pickers, and atomic save
+- **Vitest:** automated frontend and domain tests
 
-### Önkoşullar
+### Prerequisites
 
-Windows üzerinde geliştirmek için:
+To develop on Windows you need:
 
 - Git
-- Node.js 22 ve npm
-- Stable Rust MSVC toolchain ve Cargo
-- Microsoft C++ Build Tools içindeki **Desktop development with C++** bileşeni
+- Node.js 22 and npm
+- A stable Rust MSVC toolchain and Cargo
+- The **Desktop development with C++** workload from Microsoft C++ Build Tools
 - Microsoft Edge WebView2 Runtime
 
-Node.js 22, otomatik sürüm akışında kullanılan ve proje için önerilen
-sürümdür. Tauri'nin güncel sistem gereksinimleri için
-[resmi önkoşul belgesine](https://v2.tauri.app/start/prerequisites/) bakın.
+Node.js 22 is the version used in the automated release pipeline and the
+recommended version for this project. See Tauri's
+[official prerequisites documentation](https://v2.tauri.app/start/prerequisites/)
+for its current system requirements.
 
-### Depoyu hazırlama
+### Preparing the repository
 
 ```powershell
 git clone https://github.com/ogtknscn/gdd-tool.git
@@ -291,44 +292,43 @@ cd gdd-tool
 npm ci
 ```
 
-`npm ci`, `package-lock.json` içindeki sürümleri kullanarak tekrar üretilebilir
-bir bağımlılık kurulumu yapar.
+`npm ci` installs a reproducible set of dependencies using the versions
+pinned in `package-lock.json`.
 
-### Geliştirme modları
+### Development modes
 
-Yalnızca web arayüzünü çalıştırmak için:
+To run only the web UI:
 
 ```powershell
 npm run dev
 ```
 
-Tam Tauri masaüstü uygulamasını geliştirme modunda çalıştırmak için:
+To run the full Tauri desktop app in development mode:
 
 ```powershell
 npm run tauri dev
 ```
 
-Web geliştirme modu dosya açma ve kaydetme gibi masaüstü davranışlarını tam
-olarak temsil etmez. Dosya sistemi akışlarını doğrulamak için Tauri modunu
-kullanın.
+Web development mode does not fully represent desktop behaviors such as
+opening and saving files. Use Tauri mode to validate filesystem flows.
 
-### Test ve derleme
+### Testing and building
 
 ```powershell
-# Frontend/domain testleri
+# Frontend/domain tests
 npm test
 
-# Testleri izleme modu
+# Tests in watch mode
 npm run test:watch
 
-# TypeScript ve üretim frontend derlemesi
+# TypeScript check and production frontend build
 npm run build
 
-# Windows uygulaması ve NSIS kurulum paketi
+# Windows app and NSIS installer package
 npm run tauri build
 ```
 
-Rust kontrolleri:
+Rust checks:
 
 ```powershell
 cd src-tauri
@@ -338,15 +338,14 @@ cargo test
 cd ..
 ```
 
-Tauri derleme çıktıları `src-tauri/target/release/` altında oluşur. `target/`,
-`dist/` ve yerel `artifacts/` klasörleri Git tarafından takip edilmez. Son
-kullanıcılara yerel çıktılar yerine her zaman resmi
-[GitHub Releases](https://github.com/ogtknscn/gdd-tool/releases/latest)
-sayfasını yönlendirin.
+Tauri build output lands under `src-tauri/target/release/`. The `target/`,
+`dist/`, and local `artifacts/` folders are not tracked by Git. Always point
+end users to the official [GitHub Releases](https://github.com/ogtknscn/gdd-tool/releases/latest)
+page rather than to local build output.
 
-### Kalite kontrolleri
+### Quality checks
 
-Bir değişikliği paylaşmadan önce en az şu kontrollerin geçmesi beklenir:
+Before sharing a change, at least the following checks are expected to pass:
 
 ```powershell
 npm ci
@@ -360,174 +359,176 @@ cargo test
 cd ..
 ```
 
-Windows dağıtımını etkileyen değişikliklerde ayrıca `npm run tauri build`
-çalıştırın. Test paketi; proje store'u, veri göçü, kayıt, doğrulama, şablonlar,
-komut paleti, başlık düzenleme, dialog sistemi, kart sürükleme uzlaştırması ve
-ilişki silme davranışlarını kapsar. Ham `window.alert`, `window.confirm` ve
-`window.prompt` kullanımının geri dönmesini engelleyen bir regresyon kontrolü
-de bulunur.
+For changes affecting the Windows distribution, also run
+`npm run tauri build`. The test suite covers the project store, data
+migration, save, validation, templates, the command palette, title editing,
+the dialog system, card drag reconciliation, and relation-deletion behavior.
+A regression check also prevents raw `window.alert`, `window.confirm`, and
+`window.prompt` calls from being reintroduced.
 
-## Mimari
+## Architecture
 
 ```text
 gdd-tool/
-├─ .codex/                  Codex geliştirme agent tanımları
-├─ .github/workflows/       GitHub Actions sürüm iş akışları
-├─ docs/                    Araştırma ve geliştirme belgeleri
-├─ examples/                Örnek geliştirme istekleri
+├─ .codex/                  Codex development agent definitions
+├─ .github/workflows/       GitHub Actions release workflows
+├─ docs/                    Research and development documentation
+├─ examples/                Example development requests
 ├─ src/
-│  ├─ commands/             Uygulama ve ilişki komutları
-│  ├─ components/           React arayüz bileşenleri
-│  ├─ domain/               Şema, veri göçü, doğrulama ve şablonlar
-│  └─ stores/               Proje, arayüz ve geri bildirim durumları
+│  ├─ commands/             Application and relation commands
+│  ├─ components/           React UI components
+│  ├─ domain/               Schema, data migration, validation, and templates
+│  └─ stores/               Project, UI, and feedback state
 ├─ src-tauri/
-│  ├─ src/                  Rust dosya ve uygulama komutları
-│  └─ tauri.conf.json       Masaüstü ve paketleme yapılandırması
-└─ test/                    Vitest testleri
+│  ├─ src/                  Rust file and application commands
+│  └─ tauri.conf.json       Desktop and packaging configuration
+└─ test/                    Vitest tests
 ```
 
-### Katmanlar
+### Layers
 
-- `src/domain`: UI'dan bağımsız proje modeli, Zod şemaları, veri göçü,
-  doğrulama, tür alanları ve başlangıç şablonları
-- `src/stores/projectStore.ts`: Proje mutasyonları, seçim, kaydedilme durumu,
-  undo/redo ve aktif dosya bilgisi
-- `src/stores/uiStore.ts`: Açık paneller, kart yoğunluğu, bağlantı modu ve
-  tuval görünümü
-- `src/stores/feedbackStore.ts`: Uygulama içi dialog ve bildirim kuyruğu
-- `src/components`: Tuval, kartlar, paneller, dialoglar ve uygulama kabuğu
-- `src-tauri/src/lib.rs`: Windows dosya seçicileri, proje açma, atomik kayıt ve
-  kurtarma snapshot'ı
-- `test`: Domain, store ve kritik UI davranışlarının otomatik kontrolleri
+- `src/domain`: the UI-independent project model - Zod schemas, data
+  migration, validation, type fields, and starting templates
+- `src/stores/projectStore.ts`: project mutations, selection, save state,
+  undo/redo, and active-file info
+- `src/stores/uiStore.ts`: open panels, card density, connection mode, and
+  canvas view state
+- `src/stores/feedbackStore.ts`: the in-app dialog and notification queue
+- `src/components`: canvas, cards, panels, dialogs, and the application shell
+- `src-tauri/src/lib.rs`: Windows file pickers, opening projects, atomic save,
+  and the recovery snapshot
+- `test`: automated checks for domain, store, and critical UI behavior
 
-### Veri akışı
+### Data flow
 
 ```text
-Kullanıcı işlemi
+User action
     ↓
-React bileşeni
+React component
     ↓
-Zustand store mutasyonu
+Zustand store mutation
     ↓
-V3 proje modeli
-    ├─→ Zod doğrulama
-    ├─→ Undo/redo geçmişi
-    ├─→ Yerel kurtarma snapshot'ı
-    └─→ Tauri üzerinden atomik .gdd.json kaydı
+V3 project model
+    ├─→ Zod validation
+    ├─→ Undo/redo history
+    ├─→ Local recovery snapshot
+    └─→ Atomic .gdd.json save via Tauri
 ```
 
-## Windows sürüm CI'ı
+## Windows release CI
 
-`.github/workflows/release.yml`, `v*` biçimindeki Git etiketleri gönderildiğinde
-Windows sürümünü otomatik üretir:
+`.github/workflows/release.yml` automatically produces a Windows release
+whenever a `v*`-formatted Git tag is pushed:
 
-1. Kaynak kodu temiz bir Windows runner'a alır.
-2. Node.js 22 ve stable Rust kurar.
-3. `npm ci` ve `npm test` çalıştırır.
-4. Etiketin `package.json` sürümüyle eşleştiğini doğrular.
-5. `src-tauri/tauri.conf.json` ve `package.json` sürümlerini karşılaştırır.
-6. Tauri uygulamasını ve NSIS kurulum paketini derler.
-7. Portable ve kurulum EXE'lerini hazırlar.
-8. GitHub Release'i oluşturur veya mevcut Release varlıklarını günceller.
+1. Checks out the source on a clean Windows runner.
+2. Installs Node.js 22 and stable Rust.
+3. Runs `npm ci` and `npm test`.
+4. Verifies the tag matches the `package.json` version.
+5. Compares the `src-tauri/tauri.conf.json` and `package.json` versions.
+6. Builds the Tauri app and the NSIS installer package.
+7. Prepares the portable and installer EXEs.
+8. Creates the GitHub Release or updates the existing release assets.
 
-Yeni sürüm hazırlarken `package.json`, `package-lock.json`,
-`src-tauri/tauri.conf.json` ve `src-tauri/Cargo.toml` sürümlerini birlikte
-güncelleyin. Kontrolleri çalıştırıp değişiklikleri `main` dalına gönderdikten
-sonra aynı sürümle etiket oluşturun:
+When preparing a new release, update the `package.json`,
+`package-lock.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`
+versions together. After the checks pass and the changes are pushed to
+`main`, create a tag with the matching version:
 
 ```powershell
 git tag -a v0.2.0 -m "GDD Tool v0.2.0"
 git push origin v0.2.0
 ```
 
-Etiket ve paket sürümü eşleşmezse CI, Release oluşturmadan hata verir. İş akışı
-kişisel API anahtarı veya GitHub PAT kullanmaz; GitHub Actions'ın çalışma
-sırasında sağladığı token'ı ve yalnızca Release yayımlamak için gereken
-`contents: write` iznini kullanır.
+If the tag and package version do not match, CI fails without creating a
+release. The workflow does not use a personal API key or GitHub PAT; it
+relies on the token GitHub Actions provides during the run and the
+`contents: write` permission needed only to publish the release.
 
-## Codex geliştirme router'ı
+## Codex development router
 
-Bu repodaki **Sol**, **Terra** ve **Luna** adları son kullanıcıya sunulan bir AI
-sistemini ifade etmez. Bunlar yalnızca GDD Tool geliştirilirken Codex görevlerini
-yönlendiren proje rolleridir.
+The names **Sol**, **Terra**, and **Luna** in this repository do not refer to
+an AI system exposed to end users. They are project roles used only to route
+Codex tasks while GDD Tool itself is being developed.
 
-1. Sol, ham geliştirme isteğini uygulanabilir bir execution brief'e dönüştürür.
-2. Ana Codex oturumu kapsam ve riske göre yürütücüyü seçer.
-3. Terra; araştırma, mimari, belirsiz veya çok dosyalı işleri yürütür.
-4. Luna; net, mekanik ve düşük riskli işleri yürütür.
-5. Ana oturum sonucu doğrular ve tamamlanmış çıktıyı teslim eder.
+1. Sol turns a raw development request into an actionable execution brief.
+2. The main Codex session picks an executor based on scope and risk.
+3. Terra handles research, architecture, ambiguous, or multi-file work.
+4. Luna handles clear, mechanical, low-risk work.
+5. The main session verifies the result and delivers the finished output.
 
-Bu router:
+This router:
 
-- Derlenen uygulamanın parçası değildir.
-- Uygulama çalışırken model çağrısı yapmaz.
-- OpenAI SDK veya API anahtarı gerektirmez.
-- GDD proje verilerini bir AI servisine göndermez.
+- Is not part of the compiled application.
+- Makes no model calls while the app is running.
+- Requires no OpenAI SDK or API key.
+- Never sends GDD project data to an AI service.
 
-Ayrıntılar için [Geliştirme Router'ı](docs/DEVELOPMENT_ROUTER.md) belgesine
-bakın.
+See the [Development Router](docs/DEVELOPMENT_ROUTER.md) document for
+details.
 
-## Bilinen sınırlar
+## Known limitations
 
-Güncel erken sürümde:
+In the current early release:
 
-- Hazır dağıtım yalnızca Windows x64 ve NSIS hedeflidir.
-- Paketler henüz kod imzalama sertifikasıyla imzalanmaz.
-- Otomatik uygulama güncellemesi bulunmaz.
-- Bulut senkronizasyonu, hesap sistemi ve gerçek zamanlı ortak düzenleme yoktur.
-- Ürün içinde AI özelliği yoktur.
-- Proje tek bir `.gdd.json` snapshot'ı olarak kaydedilir; nesne bazlı Git diff
-  biçimi henüz yoktur.
-- Şablonlar yalnızca yeni proje başlangıç noktalarıdır.
-- Semantik container/frame ve gelişmiş sayfa organizasyonu henüz yoktur.
-- View/Edit/Play modları ve oynanabilir simülasyon bulunmaz.
-- macOS ve Linux paketleri yayımlanmaz.
+- The prebuilt distribution targets Windows x64 and NSIS only.
+- Packages are not yet signed with a code-signing certificate.
+- There is no automatic application update.
+- There is no cloud sync, account system, or real-time collaborative editing.
+- There is no AI feature in the product.
+- A project is saved as a single `.gdd.json` snapshot; there is no
+  object-level Git diff format yet.
+- Templates are new-project starting points only, not a module system.
+- Semantic containers/frames and advanced page organization do not exist yet.
+- There are no View/Edit/Play modes and no playable simulation.
+- macOS and Linux packages are not published.
 
-Erken sürüm dosya biçimi geriye uyumluluk gözetilerek geliştiriliyor olsa da
-önemli proje dosyalarını ayrıca yedekleyin.
+The early-release file format is being developed with backward compatibility
+in mind, but you should still back up important project files separately.
 
-## Gelecek vizyonu
+## Roadmap
 
-Uzun vadeli hedef, GDD Tool'u yapılandırılmış oyun tasarımı bilgisiyle Miro
-benzeri serbest çalışma alanını birleştiren, çevrimdışı çalışan bir masaüstü
-playground'a dönüştürmektir.
+The long-term goal is to turn GDD Tool into an offline desktop playground
+that combines structured game design knowledge with a Miro-like free-form
+workspace.
 
-Araştırılan yönler:
+Directions under exploration:
 
-- Açık sayfaya eklenebilen GDD şablonları ve modülleri
-- Sistem, feature veya chapter gibi semantik container'lar
-- Sayfalar arası portal ve referans kartları
-- Gelişmiş arama, filtreleme ve outline organizasyonu
-- View, Edit ve Play çalışma modlarının açık biçimde ayrılması
-- Test edilebilir değişkenler, koşullar ve akışlar
-- Tasarım fikirlerini çalıştırmaya yardımcı simülasyon görünümü
-- Olay günlüğü ve çalışma anı doğrulaması
-- Büyük projeler için performans ve sanallaştırma iyileştirmeleri
-- Nesne bazlı, Git dostu proje depolama seçenekleri
+- GDD templates and modules that can be added to an already-open page
+- Semantic containers such as systems, features, or chapters
+- Cross-page portals and reference cards
+- Advanced search, filtering, and outline organization
+- A clear separation of View, Edit, and Play working modes
+- Testable variables, conditions, and flows
+- A simulation view to help run design ideas
+- Event logging and runtime-moment validation
+- Performance and virtualization improvements for large projects
+- Object-level, Git-friendly project storage options
 
-Bu maddeler mevcut sürüm taahhüdü veya teslim tarihi değildir. Güncel kapsam
-için **Mevcut özellikler** ve **Bilinen sınırlar** bölümlerini esas alın.
-Arayüz araştırması ve aşamalı kararlar için
-[Modern UI Araştırması](docs/MODERN_UI_RESEARCH.md) belgesine bakın.
+These items are not a current release commitment or delivery date. Use the
+**Current features** and **Known limitations** sections as the source of
+truth for current scope. See the
+[Modern UI Research](docs/MODERN_UI_RESEARCH.md) document for interface
+research and staged decisions.
 
-## Katkıda bulunma
+## Contributing
 
-Projede henüz ayrı bir `CONTRIBUTING.md` veya resmî katkı süreci yoktur. Katkı
-hazırlarken:
+There is no separate `CONTRIBUTING.md` or formal contribution process yet.
+When preparing a contribution:
 
-1. Değişikliği mevcut ürün sınırı içinde tutun.
-2. Mümkünse önce bir issue ile amacı ve kapsamı netleştirin.
-3. Küçük, odaklı bir değişiklik hazırlayın.
-4. İlgili testleri ekleyin veya güncelleyin.
-5. Frontend ve Rust kalite kontrollerini çalıştırın.
-6. Gizli bilgi, API anahtarı veya kişisel dosya yolu commit etmeyin.
-7. Değişikliği açıklayan bir pull request açın.
+1. Keep the change within the current product scope.
+2. Clarify intent and scope with an issue first, if possible.
+3. Prepare a small, focused change.
+4. Add or update relevant tests.
+5. Run the frontend and Rust quality checks.
+6. Do not commit secrets, API keys, or personal file paths.
+7. Open a pull request describing the change.
 
-Kullanıcı açıkça istemedikçe ürün içine AI, model veya ağ bağımlılığı eklemeyin.
+Do not add an AI, model, or network dependency to the product unless the
+user explicitly requests it.
 
-## Lisans
+## License
 
-Bu depoda henüz bir `LICENSE` dosyası veya açık kaynak lisansı tanımlanmamıştır.
-Kaynak kodun görüntülenebilir olması otomatik olarak yeniden dağıtım, değiştirme
-veya ticari kullanım izni vermez. Kullanım ve katkı koşulları için proje
-sahibinden açıklama alınmalıdır.
+This repository does not yet define a `LICENSE` file or an open-source
+license. The source code being viewable does not, by itself, grant
+permission to redistribute, modify, or use it commercially. Contact the
+project owner for usage and contribution terms.
