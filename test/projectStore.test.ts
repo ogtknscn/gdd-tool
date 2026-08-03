@@ -81,14 +81,14 @@ describe('project store', () => {
   it('removes playground items that belong to a deleted page', () => {
     const store = useProjectStore.getState(); const firstPage = store.project.activePageId;
     store.addPage('Combat'); const secondPage = useProjectStore.getState().project.activePageId;
-    useProjectStore.getState().addPlaygroundItem('sticky', 'Not');
+    useProjectStore.getState().addPlaygroundItem('note', 'Not');
     expect(useProjectStore.getState().project.playgroundItems).toHaveLength(1);
     useProjectStore.getState().deletePage(secondPage);
     expect(useProjectStore.getState().project.activePageId).toBe(firstPage);
     expect(useProjectStore.getState().project.playgroundItems).toHaveLength(0);
   });
   it('moves a playground item to a new position, same as dragging a node card', () => {
-    useProjectStore.getState().addPlaygroundItem('sticky', 'Not');
+    useProjectStore.getState().addPlaygroundItem('note', 'Not');
     const item = useProjectStore.getState().project.playgroundItems[0];
     useProjectStore.getState().movePlaygroundItem(item.id, 420, 260);
     expect(useProjectStore.getState().project.playgroundItems[0]).toMatchObject({ id: item.id, x: 420, y: 260 });
@@ -98,6 +98,7 @@ describe('project store', () => {
     const item = useProjectStore.getState().project.playgroundItems[0];
     expect(item).toMatchObject({ type: 'image', imageData: 'data:image/png;base64,AAA=', text: 'Reference shot' });
   });
+  it('stores a note title separately from its body and keeps it undoable', () => { const store = useProjectStore.getState(); store.addPlaygroundItem('note', 'Body', 'Label'); const item = useProjectStore.getState().project.playgroundItems[0]; store.updatePlaygroundItem(item.id, { title: 'Renamed' }); expect(useProjectStore.getState().project.playgroundItems[0]).toMatchObject({ type: 'note', title: 'Renamed', text: 'Body' }); store.undo(); expect(useProjectStore.getState().project.playgroundItems[0].title).toBe('Label'); });
   it('captures a low-friction idea onto its own page without switching the active page', () => {
     const store = useProjectStore.getState(); const activeBefore = store.project.activePageId;
     store.addIdea('Yeni bir güçlenme fikri\nDetay satırı');

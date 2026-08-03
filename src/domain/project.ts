@@ -16,7 +16,7 @@ export const createId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 export const emptyProject = (): ProjectModel => {
   const pageId = createId('page');
   return {
-    schemaVersion: 7,
+    schemaVersion: 8,
     id: createId('project'),
     title: 'Yeni oyun tasarımı',
     updatedAt: new Date().toISOString(),
@@ -51,7 +51,7 @@ export const touch = (project: ProjectModel): ProjectModel => ({
   updatedAt: new Date().toISOString(),
 });
 
-// --- Legacy schemas (V1-V6) -------------------------------------------------
+// --- Legacy schemas (V1-V7) -------------------------------------------------
 // Each schema below describes exactly the on-disk shape of that historical
 // schemaVersion, so old project files can still be opened. Do not "clean up"
 // a legacy schema to match the current one - they must stay frozen in time.
@@ -190,6 +190,22 @@ const V6Schema = z.object({
   groups: z.array(LegacyGroupSchema),
 });
 
+// V7 introduced playground items. Keep this shape frozen: V8 folds its three
+// textual variants into `note` and adds a separately editable title.
+const LegacyPlaygroundItemSchema = z.object({
+  id: z.string().min(1), pageId: z.string().min(1),
+  type: z.enum(['sticky', 'text', 'comment', 'image']), text: z.string(),
+  imageData: z.string().optional(), x: z.number(), y: z.number(),
+});
+const V7Schema = z.object({
+  schemaVersion: z.literal(7), id: z.string(), title: z.string(), updatedAt: z.string(),
+  pages: z.array(GddPageSchema).min(1), activePageId: z.string().min(1),
+  objects: z.array(LegacyDetailedNodeSchema.extend({ checklist: z.array(ChecklistItemSchema) })),
+  placements: z.array(PlacementSchema),
+  relations: z.array(LegacyEdgeSchema.extend({ pageId: z.string(), customLabel: z.string().max(MAX_EDGE_LABEL_LENGTH) })),
+  groups: z.array(LegacyGroupSchema), playgroundItems: z.array(LegacyPlaygroundItemSchema),
+});
+
 const upgradeNode = (node: z.infer<typeof LegacyNodeSchema> & { pageId: string }): z.infer<typeof LegacyDetailedNodeSchema> => ({
   ...node,
   status: 'draft',
@@ -247,8 +263,8 @@ function upgradeV4ToV5(v4: z.infer<typeof V4Schema>): z.infer<typeof V5Schema> {
   };
 }
 
-function upgradeV5ToV7(v5: z.infer<typeof V5Schema>): ProjectModel {
-  return ProjectSchema.parse({
+function upgradeV5ToV7(v5: z.infer<typeof V5Schema>): z.infer<typeof V7Schema> {
+  return V7Schema.parse({
     ...v5,
     schemaVersion: 7,
     // V5 already introduced `collapsed` (see upgradeV4ToV5) - preserve it here
@@ -258,21 +274,31 @@ function upgradeV5ToV7(v5: z.infer<typeof V5Schema>): ProjectModel {
   });
 }
 
-function upgradeV6ToV7(value: unknown): ProjectModel {
+function upgradeV6ToV7(value: unknown): z.infer<typeof V7Schema> {
   const v6 = V6Schema.parse(value);
-  return ProjectSchema.parse({ ...v6, schemaVersion: 7, playgroundItems: [] });
+  return V7Schema.parse({ ...v6, schemaVersion: 7, playgroundItems: [] });
+}
+
+function upgradeV7ToV8(value: unknown): ProjectModel {
+  const v7 = V7Schema.parse(value);
+  return ProjectSchema.parse({
+    ...v7,
+    schemaVersion: 8,
+    playgroundItems: v7.playgroundItems.map((item) => ({ ...item, type: item.type === 'image' ? 'image' : 'note', title: '' })),
+  });
 }
 
 export function parseAndMigrateProject(value: unknown, language: Language = 'tr'): ProjectModel {
   const version = z.object({ schemaVersion: z.number() }).passthrough().parse(value).schemaVersion;
 
-  if (version === 7) return ProjectSchema.parse(value);
-  if (version === 6) return upgradeV6ToV7(value);
-  if (version === 5) return upgradeV5ToV7(V5Schema.parse(value));
-  if (version === 4) return upgradeV5ToV7(upgradeV4ToV5(V4Schema.parse(value)));
-  if (version === 3) return upgradeV5ToV7(upgradeV4ToV5(upgradeV3ToV4(V3Schema.parse(value))));
-  if (version === 2) return upgradeV5ToV7(upgradeV4ToV5(upgradeV3ToV4(upgradeV2ToV3(V2Schema.parse(value)))));
-  if (version === 1) return upgradeV5ToV7(upgradeV4ToV5(upgradeV3ToV4(upgradeV2ToV3(upgradeV1ToV2(value)))));
+  if (version === 8) return ProjectSchema.parse(value);
+  if (version === 7) return upgradeV7ToV8(value);
+  if (version === 6) return upgradeV7ToV8(upgradeV6ToV7(value));
+  if (version === 5) return upgradeV7ToV8(upgradeV5ToV7(V5Schema.parse(value)));
+  if (version === 4) return upgradeV7ToV8(upgradeV5ToV7(upgradeV4ToV5(V4Schema.parse(value))));
+  if (version === 3) return upgradeV7ToV8(upgradeV5ToV7(upgradeV4ToV5(upgradeV3ToV4(V3Schema.parse(value)))));
+  if (version === 2) return upgradeV7ToV8(upgradeV5ToV7(upgradeV4ToV5(upgradeV3ToV4(upgradeV2ToV3(V2Schema.parse(value))))));
+  if (version === 1) return upgradeV7ToV8(upgradeV5ToV7(upgradeV4ToV5(upgradeV3ToV4(upgradeV2ToV3(upgradeV1ToV2(value))))));
 
   throw new Error(t(language, 'project.unsupportedSchemaVersion', { version }));
 }

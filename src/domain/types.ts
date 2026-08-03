@@ -74,7 +74,10 @@ export type GddGroup = z.infer<typeof GddGroupSchema>;
 export const PlaygroundItemSchema = z.object({
   id: z.string().min(1),
   pageId: z.string().min(1),
-  type: z.enum(['sticky', 'text', 'comment', 'image']),
+  type: z.enum(['note', 'image']),
+  // A short label is separate from the note body, so reference cards can be
+  // identified without overwriting authored content.
+  title: z.string().default(''),
   text: z.string(),
   // Only set for type 'image': a data: URL (the image embedded inline, see
   // domain/image.ts for why - keeps the project a single portable file
@@ -86,7 +89,7 @@ export const PlaygroundItemSchema = z.object({
 export type PlaygroundItem = z.infer<typeof PlaygroundItemSchema>;
 
 export const ProjectSchema = z.object({
-  schemaVersion: z.literal(7),
+  schemaVersion: z.literal(8),
   id: z.string(),
   title: z.string(),
   updatedAt: z.string(),

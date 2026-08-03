@@ -1,6 +1,6 @@
 [package]
 name = "gdd-tool"
-version = "0.2.0"
+version = "0.2.1"
 description = "Local-first Game Design Document workspace"
 edition = "2021"
 

@@ -26,7 +26,7 @@ describe('nodeCompleteness', () => {
 describe('pageReadiness', () => {
   it('aggregates validated count and open checklist items across a page', () => {
     const project: ProjectModel = {
-      schemaVersion: 7, id: 'p', title: 'Project', updatedAt: '', pages: [{ id: 'page-1', title: 'Page' }], activePageId: 'page-1',
+      schemaVersion: 8, id: 'p', title: 'Project', updatedAt: '', pages: [{ id: 'page-1', title: 'Page' }], activePageId: 'page-1',
       objects: [
         { ...createObject('mechanic', 'page-1', 'A'), status: 'validated', checklist: [{ id: 'c1', text: 't', done: true }] },
         { ...createObject('quest', 'page-1', 'B'), checklist: [{ id: 'c2', text: 't', done: false }, { id: 'c3', text: 't2', done: false }] },
@@ -39,7 +39,7 @@ describe('pageReadiness', () => {
   });
 
   it('returns zeroed readiness for a page with no nodes', () => {
-    const project: ProjectModel = { schemaVersion: 7, id: 'p', title: 'Project', updatedAt: '', pages: [{ id: 'page-1', title: 'Page' }], activePageId: 'page-1', objects: [], placements: [], relations: [], groups: [], playgroundItems: [] };
+    const project: ProjectModel = { schemaVersion: 8, id: 'p', title: 'Project', updatedAt: '', pages: [{ id: 'page-1', title: 'Page' }], activePageId: 'page-1', objects: [], placements: [], relations: [], groups: [], playgroundItems: [] };
     expect(pageReadiness(project, 'page-1')).toMatchObject({ nodeCount: 0, averageCompleteness: 0, validatedCount: 0, openChecklistItems: 0 });
   });
 });

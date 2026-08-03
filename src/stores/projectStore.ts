@@ -69,9 +69,9 @@ type State = {
   moveNode: (id: string, x: number, y: number) => void;
   addRelation: (source: string, target: string, kind: EdgeKind) => void;
 
-  addPlaygroundItem: (type: PlaygroundItem['type'], text?: string) => void;
+  addPlaygroundItem: (type: 'note', text?: string, title?: string) => void;
   addPlaygroundImage: (imageData: string, caption?: string) => void;
-  updatePlaygroundItem: (id: string, text: string) => void;
+  updatePlaygroundItem: (id: string, patch: Partial<Pick<PlaygroundItem, 'text' | 'title'>>) => void;
   movePlaygroundItem: (id: string, x: number, y: number) => void;
   removePlaygroundItem: (id: string) => void;
 
@@ -385,12 +385,12 @@ export const useProjectStore = create<State>((set, get) => ({
       placements: project.placements.map((place) => (place.nodeId === id ? { ...place, x, y } : place)),
     })),
 
-  addPlaygroundItem: (type, text = '') =>
+  addPlaygroundItem: (type, text = '', title = '') =>
     mutate(set, get, (project) => ({
       ...project,
       playgroundItems: [
         ...project.playgroundItems,
-        { id: createId('playground'), pageId: project.activePageId, type, text, x: 36 + project.playgroundItems.length * 18, y: 80 + project.playgroundItems.length * 18 },
+        { id: createId('playground'), pageId: project.activePageId, type, title, text, x: 36 + project.playgroundItems.length * 18, y: 80 + project.playgroundItems.length * 18 },
       ],
     })),
 
@@ -399,14 +399,14 @@ export const useProjectStore = create<State>((set, get) => ({
       ...project,
       playgroundItems: [
         ...project.playgroundItems,
-        { id: createId('playground'), pageId: project.activePageId, type: 'image', text: caption, imageData, x: 36 + project.playgroundItems.length * 18, y: 80 + project.playgroundItems.length * 18 },
+        { id: createId('playground'), pageId: project.activePageId, type: 'image', title: '', text: caption, imageData, x: 36 + project.playgroundItems.length * 18, y: 80 + project.playgroundItems.length * 18 },
       ],
     })),
 
-  updatePlaygroundItem: (id, text) =>
+  updatePlaygroundItem: (id, patch) =>
     mutate(set, get, (project) => ({
       ...project,
-      playgroundItems: project.playgroundItems.map((item) => (item.id === id ? { ...item, text } : item)),
+      playgroundItems: project.playgroundItems.map((item) => (item.id === id ? { ...item, ...patch } : item)),
     })),
 
   movePlaygroundItem: (id, x, y) =>

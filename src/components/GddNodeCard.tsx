@@ -25,7 +25,7 @@ export function GddNodeCard({ id, data, selected, dragging }: NodeProps<Node<Gdd
       <button className="nodrag" onClick={() => openDetail(id)}>{t('canvas.detail')}</button>
       <button className="nodrag" onClick={() => beginConnection(id)}>{t('canvas.connectAria')}</button>
       <button className="nodrag" onClick={() => duplicateNode(id)}>{t('canvas.duplicate')}</button>
-      <button className="nodrag destructive" aria-label={t('canvas.deleteCard', { title: item.title })} onClick={() => void confirmRemoveNode(id)}>{t('canvas.delete')}</button>
+      <details className="node-toolbar-overflow nodrag"><summary aria-label={t('header.more')}>•••</summary><button className="destructive" aria-label={t('canvas.deleteCard', { title: item.title })} onClick={() => void confirmRemoveNode(id)}>{t('canvas.delete')}</button></details>
     </NodeToolbar>
     <div className="card-kicker"><span>{nodeLabel(item.kind, language)}</span>{data.readinessView ? <span className="readiness-badge" style={{ color: accent }}>%{Math.round(data.completeness * 100)}</span> : <span className={`status status-${item.status}`}>{statusLabel(item.status, language)}</span>}</div>
     <strong className="card-title">{item.title}</strong>

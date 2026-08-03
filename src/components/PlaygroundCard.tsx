@@ -16,13 +16,13 @@ export function PlaygroundCard({ id, data, selected }: NodeProps<Node<Playground
   const remove = useProjectStore((state) => state.removePlaygroundItem);
   const item = data.item;
   const typeLabel = t(`playground.${item.type}`);
-  return <div className={`playground-item ${item.type} ${selected ? 'selected' : ''}`} aria-label={`${typeLabel}: ${item.text || item.type}`}>
+  return <div className={`playground-item ${item.type} ${selected ? 'selected' : ''}`} aria-label={`${typeLabel}: ${item.title || item.text || item.type}`}>
     <NodeToolbar position={Position.Top} isVisible={selected} className="node-context-toolbar">
       <button className="nodrag destructive" aria-label={t('canvas.deletePlaygroundItem')} onClick={() => remove(id)}>{t('canvas.delete')}</button>
     </NodeToolbar>
-    <small>{typeLabel}</small>
+    <CommitFieldInput className="nodrag playground-title" aria-label={t('playground.titleAria')} placeholder={t('playground.titlePlaceholder')} value={item.title} onCommit={(title) => update(id, { title })} />
     {item.type === 'image'
-      ? <>{item.imageData && <img src={item.imageData} alt={item.text || typeLabel} className="playground-image" />}<CommitFieldInput className="nodrag" aria-label={t('playground.imageCaptionPlaceholder')} placeholder={t('playground.imageCaptionPlaceholder')} value={item.text} onCommit={(text) => update(id, text)} /></>
-      : <CommitFieldInput multiline className="nodrag" aria-label={t('playground.textAria')} value={item.text} onCommit={(text) => update(id, text)} />}
+      ? <>{item.imageData && <img src={item.imageData} alt={item.title || item.text || typeLabel} className="playground-image" />}<CommitFieldInput className="nodrag" aria-label={t('playground.imageCaptionPlaceholder')} placeholder={t('playground.imageCaptionPlaceholder')} value={item.text} onCommit={(text) => update(id, { text })} /></>
+      : <CommitFieldInput multiline className="nodrag" aria-label={t('playground.textAria')} value={item.text} onCommit={(text) => update(id, { text })} />}
   </div>;
 }
